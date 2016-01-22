@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html ng-app="app">
+  <head>
+    <title>Taxis G7 - Travel MonitorL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/angular-ui-grid/ui-grid.css" />
+    <script src="http://code.jquery.com/jquery-1.11.2.min.js" type="text/javascript"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-animate.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-touch.js"></script>
+    <script src="node_modules/angular-ui-grid/ui-grid.js"></script>
+    <script src="node_modules/angular-ui-grid/ui-grid.css"></script>
+    <script src="javascripts/app.js"></script>
+  </head>
+  <body>
+      <div ng-controller="mainController">
+
+          <div class="ui-grid-top-panel" style="text-align: center">TAXIS G7 - TRAVEL MONITORING {{ last_update }}</div>
+          <div id="grid1" ui-grid="gridOptions" ui-grid-pinning ui-grid-expandable class="grid" style="height: 450px;"></div>
+                  <span>{{ last_update }}</span>
+      </div>
+  </body>
+  </html>
