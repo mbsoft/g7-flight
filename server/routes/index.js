@@ -51,6 +51,7 @@ router.get('/api/v1/testclear', function(req, res, err1) {
   });
 });
 
+// Create some test data and populate tables
 router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req, res, err1) {
     // Test harness will query flight stats API to get a collection
     // of 'n' flights and add a traveler record for each one
@@ -152,8 +153,8 @@ router.get('/api/v1/travelers', function(req, res) {
       "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
       "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
       "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
-    //var query = client.query("SELECT *, to_char(currentestimatetravelarrival, 'HH24HMI DD/MM') as arrtime FROM travelchecking,travelplaces where travelplaces.internationalcode=travelchecking.internationalcode;");
-    query.on('row', function(row) {
+ 
+     query.on('row', function(row) {
       row.status = 'ON TIME';
       if (row.delay.minutes)
         row.delay = parseInt(row.delay.minutes);

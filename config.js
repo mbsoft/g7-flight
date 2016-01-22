@@ -3,6 +3,8 @@ var Config = {
   connectionString : 'postgres://localhost/nouvel_ui',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
+  // Flight Stats API production key API values provided by Ludovic
+  // from Taxis G7
   flightstatsAppID :'9e542dda',
   flightstatsAppKey :'d91bc4b068a0ff9fc585b8cefca108a8',
   firstCheckTime: 48400,
