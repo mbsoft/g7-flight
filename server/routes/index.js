@@ -54,21 +54,20 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
     var data = {status: true};
     var day = req.params.dayy;var month=req.params.month;var year=req.params.year.substring(2,4);var hour=req.params.hour;
 
-    debugger;
     options.path = config.airportstatsPath + req.params.airport
     + '/arr/' + req.params.year + '/' + month + '/' + day + '/'
     + hour +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false';
     
     var req = https.request(options, function(rest,options) {
       var body = '';
-      debugger;
+
       rest.on('data', function(data){
             body += data;
       });
       rest.on('end', function(){
    
           var fd = JSON.parse(body);
-          debugger;
+
           if (fd.error) {
             data = {status: false,
                     error: JSON.stringify(fd.error)
@@ -86,7 +85,7 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
               var cl_nbr = Math.floor(Math.random() * 3500000 + 100000);
               var acct_nbr = Math.floor(Math.random() * 3000 + 1500);
               var from_airport = f.departureAirportFsCode;
-              debugger;
+
               var coder = jsonQuery('codes[Code='+from_airport+'].Name', {
                 data: Airports
               });
@@ -104,7 +103,11 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
                 charset: 'alphabetic'
               });
               customer = customer.toUpperCase();
-              var date = new Date(f.operationalTimes.publishedArrival.dateLocal);
+
+              if (f.operationalTimes.publishedArrival != null)
+                var date = new Date(f.operationalTimes.publishedArrival.dateLocal);
+              else
+                var date = new Date(f.operationalTimes.estimatedGateArrival.dateLocal);
               if (f.carrierFsCode != 'A5') {
                 var zone = (f.arrivalAirportFsCode == 'CDG'?'TERMINAL ROISSY 3':'TERMINAL ORLY OUEST');
                   client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
@@ -114,13 +117,13 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
               }
               });
               done();
-              debugger;
+
               return res.json(data);
             });
       });
 
       res.on('error', function(e){
-        debugger;
+
         console.log(e.message);
       });
 
@@ -151,6 +154,7 @@ router.get('/api/v1/travelers', function(req, res) {
       "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
  
      query.on('row', function(row) {
+
       row.status = 'ON TIME';
       if (row.delay.minutes)
         row.delay = parseInt(row.delay.minutes);

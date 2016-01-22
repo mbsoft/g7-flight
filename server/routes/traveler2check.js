@@ -12,20 +12,19 @@ var travel2check = {
   },
   expirator: function() {
     console.log('Querying travelers to move to travelchecking table');
-    //SELECT to_timestamp()
+
     var results = [];
     pg.connect(config.connectionString, function(err, client, done) {
       if (err) {
         done();
         console.log(err);
       }
-      var query = client.query("SELECT DISTINCT travelid,tp.internationalcode, pickupday, initialdueridetimestamp " +
+      var query = client.query("SELECT DISTINCT travelid,t.fromplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
           "FROM travelers t, travelplaces tp WHERE NOT EXISTS(" +
           "SELECT 1 FROM travelchecking tc " +
           "WHERE t.travelid=tc.travelid) and t.g7pickupzone=tp.g7pickupzone");
       query.on('row', function(row) {
         results.push(row);
-        //debugger;
       });
       query.on('end', function() {
         done();
@@ -37,13 +36,11 @@ var travel2check = {
                   done();
                   console.log(err);
               }
-              //client.query("INSERT INTO travelchecking VALUES (DEFAULT,'INITIAL'," +
-              //  "($1),($2),($3),'A',to_timestamp(($4)),to_timestamp(($5)),NULL)",
-              //  [f.travelid, f.pickupday,f.internationalcode,f.initialdueridetimestamp,f.initialdueridetimestamp]);
-              debugger;
+
+              //debugger;
               client.query("INSERT INTO travelchecking VALUES (" +
-                "DEFAULT,'INITIAL','" + f.travelid + "','" + f.pickupday + "'," +
-                "'','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")," +
+                "DEFAULT,'INITIAL','" + f.travelid + "','" + f.pickupday + "','" +
+                f.fromplace.toUpperCase() + "','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")," +
                 "to_timestamp(" + f.initialdueridetimestamp + "),NULL)");
               done();
             });

@@ -16,7 +16,7 @@ var options = {
 var flightcheck = {
   init: function() {
     console.log('Started flight check...');
-    setInterval(this.expirator.bind(this), 10000); //check flight status every minute
+    setInterval(this.expirator.bind(this), 100000); //check flight status every minute
   },
   expirator: function() {
     console.log('Checking flights...');
