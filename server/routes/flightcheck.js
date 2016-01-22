@@ -53,8 +53,9 @@ var flightcheck = {
 
               var req = https.request(options, function(res,options) {
                 res.on('data', function(data){
-                  var fd = JSON.parse(data);
 
+                  var fd = JSON.parse(data);
+                  
                   console.log(travelid + ' ' + checkstatus);
                   if (fd.error == null) {
                     var fs = fd.flightStatuses[0];

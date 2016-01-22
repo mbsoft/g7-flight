@@ -23,9 +23,6 @@ var G7Router = function(routeType) {
 };
 
 /* GET home page. */
-//router.get('/', function(req, res, next) {
-//  res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index2.html'));
-//});
 router.get('/', function(req, res, next) {
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index.html'));
 });
@@ -35,8 +32,6 @@ router.get('/expandRow',function(req, res, next){
 router.get('/headerRow',function(req, res, next){
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'header-template.html'));
 });
-
-router.get('/api/v1/testload/:year/:month/:day/:hour/:airport', G7Router(require('../../server/routes/TestLoad')));
 
 router.get('/api/v1/testclear', function(req, res, err1) {
   var data = {status: true};
@@ -91,6 +86,7 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
               var cl_nbr = Math.floor(Math.random() * 3500000 + 100000);
               var acct_nbr = Math.floor(Math.random() * 3000 + 1500);
               var from_airport = f.departureAirportFsCode;
+              debugger;
               var coder = jsonQuery('codes[Code='+from_airport+'].Name', {
                 data: Airports
               });
