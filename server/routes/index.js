@@ -33,6 +33,79 @@ router.get('/headerRow',function(req, res, next){
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'header-template.html'));
 });
 
+
+
+// DELETE traveler reference - triggered by cancellation of the
+// order in the TaxiPak dispatching system
+router.delete('/api/v1/travelers/:orderid', function(req, res, err1) {
+    var data = {status: true};
+      
+    var client = new pg.Client(config.connectionString);
+    client.connect();
+
+    var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + req.params.orderid);
+    query.on('row', function(row) {
+           //Found the order - see if we are currently checking the flight
+           // and determine whether we need to continue
+           var clientdelete = new pg.Client(config.connectionString);
+           clientdelete.connect();
+           var delquery = clientdelete.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
+           delquery.on('row', function(rowcount) {
+               if (rowcount.count == 0) {
+                   console.log("Not found in travelchecking");
+                    // remove record from travelers table
+                    clientdelete.query("DELETE FROM travelers where ridenumber="+req.params.orderid);
+                    console.log("Deleted from travelers -" + req.params.orderid);
+               } else if (rowcount.count == 1) {
+                    // if only 1 result, no need to continue monitoring
+                    clientdelete.query("DELETE FROM travelchecking where travelid='"+row.travelid+"'");
+                    console.log("Deleted from travelchecking -" + row.travelid);
+                    clientdelete.query("DELETE FROM travelers where ridenumber="+req.params.orderid);
+                    console.log("Deleted from travelers -" + req.params.orderid);
+               }
+           });
+              
+    });
+    pg.end();
+    return res.json(data);
+});
+
+
+
+router.get('/api/v1/travelers', function(req, res) {
+  var results = [];
+  pg.connect(config.connectionString, function(err, client, done) {
+    if (err) {
+      done();
+      console.log(err);
+      return res.status(500).json({ success: false, data: err});
+    }
+
+    var query = client.query("SELECT tc.travelid,tc.pickupday,tc.internationalname," +
+      "tc.currentestimatetravelarrival,tc.initialtravelarrival,to_char(tc.currentestimatetravelarrival,'HH24HMI DD/MM') as arrtime," +
+      "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
+      "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
+      "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
+ 
+     query.on('row', function(row) {
+
+      row.status = 'ON TIME';
+      if (row.delay.minutes)
+        row.delay = parseInt(row.delay.minutes);
+      else {
+        row.delay = 0;
+      }
+      row.nbrtravelers = row.travelers.length;
+      results.push(row);
+    });
+    query.on('end', function() {
+      done();
+      return res.json(results);
+    });
+  });
+});
+
+// Testing endpoints to create and clear data from tables
 router.get('/api/v1/testclear', function(req, res, err1) {
   var data = {status: true};
   pg.connect(config.connectionString, function(err, client, done) {
@@ -135,39 +208,6 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
   });
   req.on('end', function(){
 
-  });
-});
-
-router.get('/api/v1/travelers', function(req, res) {
-  var results = [];
-  pg.connect(config.connectionString, function(err, client, done) {
-    if (err) {
-      done();
-      console.log(err);
-      return res.status(500).json({ success: false, data: err});
-    }
-
-    var query = client.query("SELECT tc.travelid,tc.pickupday,tc.internationalname," +
-      "tc.currentestimatetravelarrival,tc.initialtravelarrival,to_char(tc.currentestimatetravelarrival,'HH24HMI DD/MM') as arrtime," +
-      "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
-      "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
-      "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
- 
-     query.on('row', function(row) {
-
-      row.status = 'ON TIME';
-      if (row.delay.minutes)
-        row.delay = parseInt(row.delay.minutes);
-      else {
-        row.delay = 0;
-      }
-      row.nbrtravelers = row.travelers.length;
-      results.push(row);
-    });
-    query.on('end', function() {
-      done();
-      return res.json(results);
-    });
   });
 });
 
