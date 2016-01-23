@@ -4,6 +4,7 @@ var pg = require('pg');
 var path = require('path');
 var connectionString = require(path.join(__dirname, '../', '../', 'config'));
 var config = require(path.join(__dirname, '../', '../', 'config'));
+var logger = require(path.join(__dirname, '../', 'classes','logging')).logger;
 
 var travel2check = {
   init: function() {
@@ -12,7 +13,7 @@ var travel2check = {
   },
   expirator: function() {
     console.log('Querying travelers to move to travelchecking table');
-
+    logger.info('Queryingtravelers to move to travelchecking table');
     var results = [];
     pg.connect(config.connectionString, function(err, client, done) {
       if (err) {

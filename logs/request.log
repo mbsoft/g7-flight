@@ -1,0 +1,6 @@
+{"level":"info","message":"Writing logs to:  ./logs","timestamp":"2016-01-23T21:23:35.466Z"}
+{"level":"info","message":"Running at log level 2 === debug","timestamp":"2016-01-23T21:23:35.468Z"}
+{"level":"info","message":"Queryingtravelers to move to travelchecking table","timestamp":"2016-01-23T21:23:45.527Z"}
+2016-01-23T21:27:09.620Z - info: Writing logs to:  ./logs
+2016-01-23T21:27:09.621Z - info: Running at log level 2 === debug
+2016-01-23T21:27:19.664Z - info: Queryingtravelers to move to travelchecking table

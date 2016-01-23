@@ -7,7 +7,7 @@ var path = require("path");
 var os = require("os");
 // We configure, and then export, the default winston logger.
 var logger = require("winston");
-
+var config = require(path.join(__dirname, '../', '../', 'config'));
 // Winston configuration. This will be taken care of when this module is
 // first required, even if nothing is used from it.
 // Additional log level of "requests" above standard to allow requests to
@@ -24,11 +24,12 @@ var loggerLevels = {
 
 // Localize reference to config since logging might be required in
 // certain test situations where CONFIG is not actually global.
-var config = global.CONFIG || {};
+
 
 // Base directory where we output logs to.
 // Normalize logging directory.
-var logDirectory = "."; //config.logDirectory || os.tmpdir();
+debugger;
+var logDirectory = config.logDirectory || os.tmpdir();
 var logLevel = config.logLevel || "info";
 
 // Anything equal to or greater than the log level enum will be caught.
@@ -43,6 +44,15 @@ logger.addColors({request: 'magenta'});
 logger.add(logger.transports.Console, {
     level: logLevel || "info",
     colorize: true
+});
+
+logger.add(logger.transports.File, {
+    // Friendly to trailing or non trailing slash configs.
+    filename: path.join(logDirectory, "request.log"),
+    maxsize: 100000000,
+    colorize: false,
+    json: false,
+    level: 'request'
 });
 
 
@@ -65,7 +75,12 @@ exports.logger = logger;
 // Custom logger used for timings.
 var timeLogger = new (logger.Logger)({
     transports: [
-        new (logger.transports.Console)({colorize: true})
+        new (logger.transports.Console)({colorize: true}),
+        new (logger.transports.File)({
+            json:true,
+            filename: path.join(config.logDirectory || os.tmpdir(), "timing.log"),
+            colorize: false,
+        })
     ]
 });
 timeLogger.info = function(msg, meta){
