@@ -34,6 +34,27 @@ router.get('/headerRow',function(req, res, next){
 });
 
 
+// POST - add a traveler record
+router.post('/api/v1/travelers', function(req, res, err1) {
+    var reqBody = req.body;
+    var data = {status: true};
+    debugger;
+    pg.connect(config.connectionString, function(err, client, done) {
+       if (err) {
+           console.log(err);
+       } 
+       client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
+        [reqBody.ridenumber, reqBody.travelid,
+         reqBody.pickupday, reqBody.subscriptioncode,
+         reqBody.requestedby, reqBody.refclient,
+         reqBody.g7pickupzone, reqBody.fromplace,
+         reqBody.typeofplace, reqBody.initialdueridetimestamp,
+         0, 'CREATED']);
+    });
+    
+    pg.end();
+    return res.json(data);
+});
 
 // DELETE traveler reference - triggered by cancellation of the
 // order in the TaxiPak dispatching system
