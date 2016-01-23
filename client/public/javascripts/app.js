@@ -55,7 +55,10 @@ app.controller('mainController', function($scope, $http, $timeout) {
           data[i].subGridOptions = {
             enableSorting: false,
             enableColumnMenus: false,
-            columnDefs: [{name:"ID", field:"ridenumber", width: 100},{name:"Subscription Code", field:"subscriptioncode", width: 125},{name:"Requested By",field:"requestedby", width: 150}],
+            columnDefs: [{name:"ID", field:"ridenumber", width: 100},
+                         {name:"Subscription Code", field:"subscriptioncode", width: 125},
+                         {name:"Passenger",field:"requestedby", width: 150},
+                         {name:"Requested By",field:"refclient", width: 150}],
             data: data[i].travelers
           }
         }
