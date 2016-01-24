@@ -38,7 +38,7 @@ router.get('/headerRow',function(req, res, next){
 router.post('/api/v1/travelers', function(req, res, err1) {
     var reqBody = req.body;
     var data = {status: true};
-    debugger;
+
     pg.connect(config.connectionString, function(err, client, done) {
        if (err) {
            console.log(err);
@@ -54,6 +54,30 @@ router.post('/api/v1/travelers', function(req, res, err1) {
     
     pg.end();
     return res.json(data);
+});
+
+// GET - add a traveler record using query params
+// Legacy TaxiPak system does not support HTTP POST
+router.get('/api/v1/travelers/:orderid', function(req, res, err1) {
+    
+    var data = {status: true};
+    
+     pg.connect(config.connectionString, function(err, client, done) {
+       if (err) {
+           console.log(err);
+       } 
+       debugger;
+       client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
+        [req.params.orderid, req.query.travelid,
+         req.query.pickupday, req.query.subscriptioncode,
+         req.query.requestedby, req.query.refclient,
+         req.query.g7pickupzone, req.query.fromplace,
+         req.query.typeofplace, req.query.initialduetime,
+         0, 'CREATED']);
+    });
+    
+    pg.end(); 
+    return res.json(data);  
 });
 
 // DELETE traveler reference - triggered by cancellation of the
