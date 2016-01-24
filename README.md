@@ -72,7 +72,7 @@ travelers who are on the flight and have requested a taxi
 ### Add a traveler record 
 #### (gets called when a customer orders a taxi with a destination at an airport or train station)
 POST
-[http://localhost:3000/api/travelers]
+[http://localhost:3000/api/travelers](http://localhost:3000/api/travelers)
 
 Body contains
 ```
@@ -89,6 +89,26 @@ Body contains
     "initialdueridetimestamp": 1453640400
 }
 ```
+
+---
+### Add a traveler record from legacy TaxiPak system
+#### this system only supports HTTP GET
+GET
+[http://localhost:3000/api/travelers/:orderid?params](http://localhost:3000/api/travelers/:orderid?params)
+
+Parameters must include:
+```
+?travelid={flight or train number}
+&pickupday={DD-MM-YY}
+&subscriptioncode={account code}
+&requestedby={who made order request}
+&refclient={customer name}
+&g7pickupzone={internal description of TaxiPak zone}
+&fromplace={location of origin of travel}
+&typeofplace={A|G}
+&initialduetime={UNIX datetime stamp}
+```
+
 ---
 ### Delete a record from the travelers table using the order ID from TaxiPak
 DELETE
