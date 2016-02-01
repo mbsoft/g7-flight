@@ -23,7 +23,7 @@ var G7Router = function(routeType) {
 };
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/viewTravelBoard', function(req, res, next) {
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index.html'));
 });
 router.get('/expandRow',function(req, res, next){
@@ -33,6 +33,16 @@ router.get('/headerRow',function(req, res, next){
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'header-template.html'));
 });
 
+/* GET table showing all traveler records - just for debug/testing */
+router.get('/viewTravelers', function(req, res, next) {
+  res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index1.html'));
+});
+router.get('/expandRow',function(req, res, next){
+  res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'expandableRowTemplate.html'));
+});
+router.get('/headerRow',function(req, res, next){
+  res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'header-template.html'));
+});
 
 // POST - add a traveler record
 router.post('/api/v1/travelers', function(req, res, err1) {
@@ -66,7 +76,7 @@ router.get('/api/v1/travelers/:orderid', function(req, res, err1) {
        if (err) {
            console.log(err);
        } 
-       debugger;
+
        client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
         [req.params.orderid, req.query.travelid,
          req.query.pickupday, req.query.subscriptioncode,
@@ -116,7 +126,6 @@ router.delete('/api/v1/travelers/:orderid', function(req, res, err1) {
 });
 
 
-
 router.get('/api/v1/travelers', function(req, res) {
   var results = [];
   pg.connect(config.connectionString, function(err, client, done) {
@@ -126,15 +135,40 @@ router.get('/api/v1/travelers', function(req, res) {
       return res.status(500).json({ success: false, data: err});
     }
 
-    var query = client.query("SELECT tc.travelid,tc.pickupday,tc.internationalname," +
-      "tc.currentestimatetravelarrival,tc.initialtravelarrival,to_char(tc.currentestimatetravelarrival,'HH24HMI DD/MM') as arrtime," +
-      "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
-      "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
-      "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
+    var query = client.query("SELECT * FROM travelers ORDER BY initialdueridetimestamp");
  
      query.on('row', function(row) {
 
-      row.status = 'ON TIME';
+      results.push(row);
+    });
+    query.on('end', function() {
+      done();
+      return res.json(results);
+    });
+  });
+});
+
+
+router.get('/api/v1/travelboard', function(req, res) {
+  var results = [];
+  pg.connect(config.connectionString, function(err, client, done) {
+    if (err) {
+      done();
+      console.log(err);
+      return res.status(500).json({ success: false, data: err});
+    }
+
+    var query = client.query("SELECT tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+      "tc.currentestimatetravelarrival,tc.initialtravelarrival,extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE 'CET') as arrtime," +
+      "extract(epoch from tc.initialtravelarrival AT TIME ZONE 'CET') as origarrtime," +
+      "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
+      "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
+      "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
+ 
+     query.on('row', function(row) {
+
+
+      //row.status = 'ON TIME';
       if (row.delay.minutes)
         row.delay = parseInt(row.delay.minutes);
       else {
@@ -152,6 +186,7 @@ router.get('/api/v1/travelers', function(req, res) {
 
 // Testing endpoints to create and clear data from tables
 router.get('/api/v1/testclear', function(req, res, err1) {
+
   var data = {status: true};
   pg.connect(config.connectionString, function(err, client, done) {
     if (err) {
@@ -168,13 +203,14 @@ router.get('/api/v1/testclear', function(req, res, err1) {
 router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req, res, err1) {
     // Test harness will query flight stats API to get a collection
     // of 'n' flights and add a traveler record for each one
+    
     var results = [];
     var data = {status: true};
     var day = req.params.dayy;var month=req.params.month;var year=req.params.year.substring(2,4);var hour=req.params.hour;
 
     options.path = config.airportstatsPath + req.params.airport
     + '/arr/' + req.params.year + '/' + month + '/' + day + '/'
-    + hour +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false';
+    + hour +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false&maxFlights=5&codeType=IATA';
     
     var req = https.request(options, function(rest,options) {
       var body = '';
@@ -185,12 +221,15 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
       rest.on('end', function(){
    
           var fd = JSON.parse(body);
-
+          var count = 0;
+          
           if (fd.error) {
             data = {status: false,
                     error: JSON.stringify(fd.error)
                     }
           }
+          
+
           console.log(fd.flightStatuses);
           var fs = fd.flightStatuses;
           pg.connect(config.connectionString, function(err, client, done) {
@@ -200,6 +239,10 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
               console.log(err);
             }
             fs.forEach(function(f){
+              if (++count < 6) {
+                
+              
+              
               var cl_nbr = Math.floor(Math.random() * 3500000 + 100000);
               var acct_nbr = Math.floor(Math.random() * 3000 + 1500);
               var from_airport = f.departureAirportFsCode;
@@ -222,16 +265,20 @@ router.get('/api/v1/testharness/:year/:month/:dayy/:hour/:airport', function(req
               });
               customer = customer.toUpperCase();
 
+
               if (f.operationalTimes.publishedArrival != null)
-                var date = new Date(f.operationalTimes.publishedArrival.dateLocal);
-              else
-                var date = new Date(f.operationalTimes.estimatedGateArrival.dateLocal);
+                var date = new Date(f.operationalTimes.publishedArrival.dateUtc);
+              else if (f.operationalTimes.estimateGateArrival != null)
+                var date = new Date(f.operationalTimes.estimatedGateArrival.dateUtc);
+              else if (f.operationalTimes.flightPlanPlannedArrival)
+                var date = new Date(f.operationalTimes.flightPlanPlannedArrival.dateUtc);
               if (f.carrierFsCode != 'A5') {
                 var zone = (f.arrivalAirportFsCode == 'CDG'?'TERMINAL ROISSY 3':'TERMINAL ORLY OUEST');
                   client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
                   [cl_nbr,f.carrierFsCode+f.flightNumber,day+'-'+month+'-'+year,acct_nbr,customer,customer,
                   zone,from_airport,'A',date.getTime()/1000,date.getTime()/1000,
                   'CREATED']);
+              }
               }
               });
               done();

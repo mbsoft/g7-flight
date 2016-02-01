@@ -18,7 +18,7 @@ $ node debug bin/www
 ---
 ###  Query for flights/customer table
 GET
-[http://localhost:3000/api/v1/travelers](http://localhost:3000/api/v1/travelers)
+[http://localhost:3000/api/v1/travelboard](http://localhost:3000/api/v1/travelboard)
 
 Returns JSON array of flights being actively checked for status. Each flight contains an array of 
 travelers who are on the flight and have requested a taxi
@@ -69,6 +69,48 @@ travelers who are on the flight and have requested a taxi
 ]
 ```
 ---
+###  Query for traveler table
+GET
+[http://localhost:3000/api/v1/travelers](http://localhost:3000/api/v1/travelers)
+
+Returns JSON array of travelers-order in TaxiPak that require pickup at airport or trainstation. 
+```
+[
+    {
+        "travelers": [
+            {
+                "fromplace": "Tokyo, Japan - Haneda ",
+                "g7pickupzone": "TERMINAL ROISSY 3",
+                "initialdueridetimestamp": 1454164800,
+                "lastdueridetimestamp": 1454164800,
+                "pickupday": "30-01-16",
+                "refclient": "MR GHZONDROHTSU",
+                "requestedby": "MR GHZONDROHTSU",
+                "ridenumber": 324681,
+                "ridestatus": "CREATED",
+                "subscriptioncode": "1676",
+                "travelid": "JL45",
+                "typeofplace": "A"
+            },
+            {
+                "fromplace": "Casablanca, Morocco - Mohamed ",
+                "g7pickupzone": "TERMINAL ROISSY 3",
+                "initialdueridetimestamp": 1454165100,
+                "lastdueridetimestamp": 1454165100,
+                "pickupday": "30-01-16",
+                "refclient": "MR ITWJPOUKHRWA",
+                "requestedby": "MR ITWJPOUKHRWA",
+                "ridenumber": 3277830,
+                "ridestatus": "CREATED",
+                "subscriptioncode": "2284",
+                "travelid": "AT788",
+                "typeofplace": "A"
+            }
+        ]
+    }
+]
+```
+---
 ### Add a traveler record 
 #### (gets called when a customer orders a taxi with a destination at an airport or train station)
 POST
@@ -115,9 +157,12 @@ DELETE
 [http://localhost:3000/api/travelers/:orderid](http://localhost:3000/api/travelers/:orderid)
 
 ---
-### View table of results 
+### View of 'Travel Board' - flights and passengers
 
-[http://localhost:3000](http://localhost:3000)
+[http://localhost:3000/viewTravelBoard](http://localhost:3000/viewTravelBoard)
+
+### View of Travelers - just pending passengers
+[http://localhost:3000/viewTravelers](http://localhost:3000/viewTravelers)
 
 ---
 ### Clear database tables for testing
@@ -130,4 +175,3 @@ where:
 ```
     /{YYYY}/{MM}/{DD}/{HH}/{IATA_AIRPORT_CODE}  
  ```
-

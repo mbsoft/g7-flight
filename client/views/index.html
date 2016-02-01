@@ -12,13 +12,15 @@
     <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-touch.js"></script>
     <script src="node_modules/angular-ui-grid/ui-grid.js"></script>
     <script src="node_modules/angular-ui-grid/ui-grid.css"></script>
+    <link rel="stylesheet" type="text/css" href="./stylesheets/style.css" />
+    <script src="javascripts/util.js"></script>
     <script src="javascripts/app.js"></script>
   </head>
   <body>
       <div ng-controller="mainController">
 
           <div class="ui-grid-top-panel" style="text-align: center">TAXIS G7 - TRAVEL MONITORING {{ last_update }}</div>
-          <div id="grid1" ui-grid="gridOptions" ui-grid-pinning ui-grid-expandable class="grid" style="height: 450px;"></div>
+          <div id="grid1" ui-grid="gridOptions" ui-grid-pinning ui-grid-expandable class="grid" style="height: 750px;"></div>
                   <span>{{ last_update }}</span>
       </div>
   </body>

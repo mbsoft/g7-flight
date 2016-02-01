@@ -20,6 +20,7 @@ var travel2check = {
         done();
         console.log(err);
       }
+      // Get rows in the travelers table that aren't represented in the travelchecking table
       var query = client.query("SELECT DISTINCT travelid,t.fromplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
           "FROM travelers t, travelplaces tp WHERE NOT EXISTS(" +
           "SELECT 1 FROM travelchecking tc " +
@@ -30,21 +31,26 @@ var travel2check = {
       query.on('end', function() {
         done();
         if (results) {
+          // Check whether it is time to insert the row for travelchecking
+          var timeNow = Math.floor(Date.now()/1000);
           results.forEach(function(f){
-            console.log(f.travelid + ' ' + f.initialdueridetimestamp + ' ' + f.internationalcode);
-            pg.connect(config.connectionString, function(err, client, done) {
-              if (err) {
-                  done();
-                  console.log(err);
-              }
 
-              //debugger;
-              client.query("INSERT INTO travelchecking VALUES (" +
-                "DEFAULT,'INITIAL','" + f.travelid + "','" + f.pickupday + "','" +
-                f.fromplace.toUpperCase() + "','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")," +
-                "to_timestamp(" + f.initialdueridetimestamp + "),NULL)");
-              done();
-            });
+            if (f.initialdueridetimestamp - (60+5)*60 <= timeNow) {
+                console.log(f.travelid + ' ' + f.initialdueridetimestamp + ' ' + f.internationalcode);
+                pg.connect(config.connectionString, function(err, client, done) {
+                if (err) {
+                    done();
+                    console.log(err);
+                }
+              
+                //debugger;
+                client.query("INSERT INTO travelchecking VALUES (" +
+                    "DEFAULT,'INITIAL','" + f.travelid + "','" + f.pickupday + "','" +
+                    f.fromplace.toUpperCase() + "','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE 'CET'," +
+                    "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE 'CET',NULL)");
+                done();
+                });
+            }
           });
         } else {
           console.log("No rows to add");

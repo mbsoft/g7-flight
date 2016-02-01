@@ -8,16 +8,11 @@ a {
 }
 
 .grid {
-  width: 500px;
   height: 750px;
-  position: absolute;
   top: 100px;
-  left: 25px;
+  left: 75px;
 }
-.grid1 {
-  width: 500px;
-  height: 750px;
-}
+
 .grid .ui-grid-header-cell {
   height: 60px;
 }
@@ -31,7 +26,11 @@ a {
   color: #006400;
 }
 
+.yellow {
+    background-color: #ff9900;
+    color: #ff8800;
+}
 .red {
   background-color: #1fe0f0;
-  color: #153ff0;
+  color: #dd1122;
 }

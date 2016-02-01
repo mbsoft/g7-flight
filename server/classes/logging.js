@@ -28,7 +28,6 @@ var loggerLevels = {
 
 // Base directory where we output logs to.
 // Normalize logging directory.
-debugger;
 var logDirectory = config.logDirectory || os.tmpdir();
 var logLevel = config.logLevel || "info";
 
