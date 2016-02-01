@@ -11,7 +11,7 @@ var Config = {
   flightstatsAppID: '4be16a5f',
   flightstatsAppKey : '9d22bfb7f120c06a2451fa16bd388552',
   firstCheckTime: 48400,
-  tzOffset: 0,
+  tzDesc: 'CET',
   
   //Logging
   logDirectory: './logs',

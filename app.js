@@ -6,7 +6,9 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var routes = require('./server/routes/index');
-var users = require('./server/routes/users');
+var apiroutes = require('./server/routes/api/index');
+var testroutes = require('./server/routes/test/index');
+
 var flightcheck = require('./server/routes/flightcheck');
 var traveler2check = require('./server/routes/traveler2check');
 
@@ -22,7 +24,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, './client', 'public')));
 
 app.use('/', routes);
-app.use('/users', users);
+app.use('/api', apiroutes);
+app.use('/test', testroutes);
 
 traveler2check.init();
 flightcheck.init();

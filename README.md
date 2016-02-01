@@ -156,6 +156,11 @@ Parameters must include:
 DELETE
 [http://localhost:3000/api/travelers/:orderid](http://localhost:3000/api/travelers/:orderid)
 
+### Delete a record from the travelers table from legacy TaxiPak system
+### this system only supports HTTP GET
+GET
+[http://localhost:3000/api/travelers/delete/:orderid](http://localhost:3000/api/travelers/delete/:orderid)
+
 ---
 ### View of 'Travel Board' - flights and passengers
 
@@ -166,10 +171,10 @@ DELETE
 
 ---
 ### Clear database tables for testing
-[http://localhost:3000/api/v1/testclear](http://localhost:3000/api/v1/testclear)
+[http://localhost:3000/test/clear](http://localhost:3000/test/clear)
 
 ### Populate database tables with data for testing 
-[http://localhost:3000/api/v1/testharness/2016/01/16/22/CDG](http://localhost:3000/api/v1/testharness/2016/01/16/22/CDG)
+[http://localhost:3000/test/harness/2016/01/16/22/CDG](http://localhost:3000/test/harness/2016/01/16/22/CDG)
 
 where: 
 ```
