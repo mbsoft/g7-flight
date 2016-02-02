@@ -16,7 +16,7 @@ var options = {
 var flightcheck = {
   init: function() {
     console.log('Started flight check...');
-    setInterval(this.expirator.bind(this), 100000); //check flight status every minute
+    setInterval(this.expirator.bind(this), 60000); //check flight status every minute
   },
   expirator: function() {
     console.log('Checking flights...');
@@ -26,7 +26,7 @@ var flightcheck = {
         done();
         console.log(err);
       }
-      var query = client.query("SELECT * FROM travelchecking;");
+      var query = client.query("SELECT * FROM travelchecking WHERE status != 'TRAVELID_ERROR' AND status != 'ARRIVED';");
       query.on('row', function(row) {
         results.push(row);
       });
@@ -40,6 +40,7 @@ var flightcheck = {
             var time2arrival = Math.floor(f.initialtravelarrival/1000) - Math.floor(Date.now() / 1000 +
                                 config.tzOffset *3600);  //tz diffs
 
+            //debugger;
             // INITIAL - record just added to the table. No query to the API yet
             // CHECKED - first check of arrival tiem retrieved. Won't be checked again until within configurable time of arrival
             // ACTIVE - flight that is being actively checked for status
@@ -58,23 +59,19 @@ var flightcheck = {
                   
                   console.log(travelid + ' ' + checkstatus);
                   if (fd.error == null) {
+                    if (fd.flightStatuses.length == 0) {
+                       pg.connect(config.connectionString, function(err, client, done) {
+                        if (err) {
+                            done();
+                            console.log(err);
+                            }
+                        client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+                        done();
+                      });
+                    }
+                    
                     var fs = fd.flightStatuses[0];
                     if (fs != null) {
-                      var travid = fs.carrierFsCode + fs.flightNumber;
-                      //if (fs.delays) {
-                        //if (fs.delays.arrivalGateDelayMinutes)
-                          //console.log(fs.arrivalAirportFsCode + '-' + fs.carrierFsCode + fs.flightNumber +
-                          //' Scheduled: ' + fs.operationalTimes.scheduledGateArrival.dateLocal +
-                          //' Delay:' + fs.delays.arrivalGateDelayMinutes + "MN");
-                        //else
-                          //console.log(fs.arrivalAirportFsCode + '-' + fs.carrierFsCode + fs.flightNumber +
-                          //' Scheduled: ' + fs.operationalTimes.scheduledGateArrival.dateLocal +
-                          //' Delay: NONE (GREEN)');
-                      //}
-                      //else
-                        //console.log(fs.arrivalAirportFsCode + '-' + fs.carrierFsCode + fs.flightNumber +
-                        //' Scheduled: ' + fs.operationalTimes.scheduledGateArrival.dateLocal +
-                        //' Delay: NONE (GREEN)');
 
                         // query PG and update
                       pg.connect(config.connectionString, function(err, client, done) {
@@ -98,25 +95,44 @@ var flightcheck = {
                         }
 
                         // is the API reporting an estimated gate arrival time?
-                        if (otimes.estimatedGateArrival) {
+                        if (otimes.estimatedGateArrival||otimes.scheduledGateArrival) {
                           if (checkstatus == 'CHECKED')
-                            client.query("UPDATE travelchecking SET internationalname=($1),status='ACTIVE',initialtravelarrival=($2),currentestimatetravelarrival=($3) WHERE travelid=($4)",
-                              [from_airport,otimes.scheduledGateArrival.dateLocal,otimes.estimatedGateArrival.dateLocal,travelid ]);
-                          else if (checkstatus == 'ACTIVE')
-                            client.query("UPDATE travelchecking SET internationalname=($1),status='ACTIVE',currentestimatetravelarrival=($2),nexttravelcheckdate=to_timestamp(($3)) WHERE travelid=($4)",
-                              [from_airport,otimes.estimatedGateArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                            client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1) WHERE travelid=($2)",
+                              [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),travelid ]);
+                          else if (checkstatus == 'ACTIVE') {
+                            if (otimes.actualGateArrival) {
+                                client.query("UPDATE travelchecking SET status='ARRIVED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
+                                    [otimes.actualGateArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                            } else 
+                                client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1) WHERE travelid=($2)",
+                                    [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),travelid ]);
+                          }
+                          else if (checkstatus == 'INITIAL')
+                            client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
+                              [otimes.scheduledGateArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
                         }
-                        else {
-                          if (checkstatus == 'INITIAL')
-                            client.query("UPDATE travelchecking SET internationalname=($1), status='CHECKED',initialtravelarrival=($2),currentestimatetravelarrival=($3) WHERE travelid=($4)",
-                              [from_airport,otimes.scheduledGateArrival.dateLocal,otimes.scheduledGateArrival.dateLocal,travelid ]);
-                          else if (checkstatus == 'CHECKED' || checkstatus == 'ACTIVE') //first time CHECKED
-                            client.query("UPDATE travelchecking SET internationalname=($1), status='ACTIVE',initialtravelarrival=($2),currentestimatetravelarrival=($3),nexttravelcheckdate=to_timestamp(($4)) WHERE travelid=($5)",
-                              [from_airport,otimes.scheduledGateArrival.dateLocal,otimes.scheduledGateArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                        else if (otimes.estimatedRunwayArrival) {
+                          if (checkstatus == 'INITIAL') {
+                              if (otimes.actualRunwayArrival != null)
+                                client.query("UPDATE travelchecking SET status='ARRIVED',initialtravelarrival=($1),currentestimatetravelarrival=($2) WHERE travelid=($3)",
+                                [otimes.actualRunwayArrival.dateLocal,otimes.actualRunwayArrival.dateLocal,travelid ]);                            
+                          }
+                          else if (checkstatus == 'CHECKED' || checkstatus == 'ACTIVE') {  
+
+                            if (otimes.actualRunwayArrival != null)
+                                client.query("UPDATE travelchecking SET status='ARRIVED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
+                                [otimes.actualRunwayArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                            else if (otimes.estimatedRunwayArrival != null)
+                                client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=($1),currentestimatetravelarrival=($2),nexttravelcheckdate=to_timestamp(($3)) WHERE travelid=($4)",
+                                    [otimes.estimatedRunwayArrival.dateLocal,otimes.estimatedRunwayArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                                      
+                          }
                         }
                         done();
                       });
                     }
+                  } else {  // Error response
+
                   }
                 });
 
