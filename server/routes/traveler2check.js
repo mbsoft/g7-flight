@@ -35,6 +35,7 @@ var travel2check = {
           var timeNow = Math.floor(Date.now()/1000);
           results.forEach(function(f){
 
+            // transfer orders that are coming due in the next hour
             if (f.initialdueridetimestamp - (60+5)*60 <= timeNow) {
                 console.log(f.travelid + ' ' + f.initialdueridetimestamp + ' ' + f.internationalcode);
                 pg.connect(config.connectionString, function(err, client, done) {
@@ -43,11 +44,10 @@ var travel2check = {
                     console.log(err);
                 }
               
-                //debugger;
                 client.query("INSERT INTO travelchecking VALUES (" +
                     "DEFAULT,'INITIAL','" + f.travelid + "','" + f.pickupday + "','" +
-                    f.fromplace.toUpperCase() + "','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE 'CET'," +
-                    "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE 'CET',NULL)");
+                    f.fromplace.toUpperCase() + "','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "'," +
+                    "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "',NULL)");
                 done();
                 });
             }
