@@ -24,7 +24,7 @@ var G7Router = function(routeType) {
 
 
 // POST - add a traveler record
-apirouter.post('/v1/travelers', function(req, res, err1) {
+apirouter.post('/v1/travelers/add', function(req, res, err1) {
     var reqBody = req.body;
     var data = {status: true};
 
@@ -45,74 +45,18 @@ apirouter.post('/v1/travelers', function(req, res, err1) {
     return res.json(data);
 });
 
-// GET - add a traveler record using query params
-// Legacy TaxiPak system does not support HTTP POST
-apirouter.get('/v1/travelers/:orderid', function(req, res, err1) {
-    
-    var data = {status: true};
-    
-     pg.connect(config.connectionString, function(err, client, done) {
-       if (err) {
-           console.log(err);
-       } 
 
-       client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
-        [req.params.orderid, req.query.travelid,
-         req.query.pickupday, req.query.subscriptioncode,
-         req.query.requestedby, req.query.refclient,
-         req.query.g7pickupzone, req.query.fromplace,
-         req.query.typeofplace, req.query.initialduetime,
-         0, 'CREATED']);
-    });
-    
-    pg.end(); 
-    return res.json(data);  
-});
-
-// DELETE traveler reference - from legacy TaxiPak system
-// Need to perform a GET method
-apirouter.get('/v1/travelers/delete/:orderid', function(req, res, err1) {
-    var data = {status: true};
-      
-    var client = new pg.Client(config.connectionString);
-    client.connect();
-
-    var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + req.params.orderid);
-    query.on('row', function(row) {
-           //Found the order - see if we are currently checking the flight
-           // and determine whether we need to continue
-           var clientdelete = new pg.Client(config.connectionString);
-           clientdelete.connect();
-           var delquery = clientdelete.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
-           delquery.on('row', function(rowcount) {
-               if (rowcount.count == 0) {
-                   console.log("Not found in travelchecking");
-                    // remove record from travelers table
-                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+req.params.orderid);
-                    console.log("Deleted from travelers -" + req.params.orderid);
-               } else if (rowcount.count == 1) {
-                    // if only 1 result, no need to continue monitoring
-                    clientdelete.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
-                    console.log("Deleted from travelchecking -" + row.travelid);
-                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+req.params.orderid);
-                    console.log("Deleted from travelers -" + req.params.orderid);
-               }
-           });
-              
-    });
-    pg.end();
-    return res.json(data);   
-});
 
 // DELETE traveler reference - triggered by cancellation of the
 // order in the TaxiPak dispatching system
-apirouter.delete('/v1/travelers/:orderid', function(req, res, err1) {
+apirouter.post('/v1/travelers/delete', function(req, res, err1) {
     var data = {status: true};
-      
+    var reqBody = req.body;
+    
     var client = new pg.Client(config.connectionString);
     client.connect();
 
-    var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + req.params.orderid);
+    var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
     query.on('row', function(row) {
            //Found the order - see if we are currently checking the flight
            // and determine whether we need to continue
@@ -123,14 +67,14 @@ apirouter.delete('/v1/travelers/:orderid', function(req, res, err1) {
                if (rowcount.count == 0) {
                    console.log("Not found in travelchecking");
                     // remove record from travelers table
-                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+req.params.orderid);
-                    console.log("Deleted from travelers -" + req.params.orderid);
+                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
+                    console.log("Deleted from travelers -" + reqBody.ridenumber);
                } else if (rowcount.count == 1) {
                     // if only 1 result, no need to continue monitoring
                     clientdelete.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
                     console.log("Deleted from travelchecking -" + row.travelid);
-                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+req.params.orderid);
-                    console.log("Deleted from travelers -" + req.params.orderid);
+                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
+                    console.log("Deleted from travelers -" + reqBody.ridenumber);
                }
            });
               

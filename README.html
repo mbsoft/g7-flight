@@ -1,0 +1,150 @@
+<h1 id="g7-flight-stats-integration">G7 Flight Stats Integration</h1>
+<p>Create PSQL database named &#39;nouvel_ui (not needed unless testing locally)&#39;</p>
+<p>Create schema and restore some test data</p>
+<pre><code>psql  nouvel_ui &lt; nouvel_ui.sql
+</code></pre><hr>
+<p>Production start (on jws-test1 server):</p>
+<pre><code># service g7-travel start
+</code></pre><p>Debug start:</p>
+<pre><code>$ node debug bin/www
+</code></pre><p>Production stop (on jws-test1 server):</p>
+<pre><code># service g7-travel stop
+</code></pre><hr>
+<h3 id="query-for-flights-customer-table">Query for flights/customer table</h3>
+<p>GET<br><a href="http://jws-test1/api/v1/travelboard">http://jws-test1/api/v1/travelboard</a></p>
+<p>Returns JSON array of flights being actively checked for status. Each flight contains an array of<br>travelers who are on the flight and have requested a taxi</p>
+<pre><code>[
+    {
+        &quot;arrtime&quot;: &quot;08H00 24/01&quot;,
+        &quot;currentestimatetravelarrival&quot;: &quot;2016-01-24T13:00:00.000Z&quot;,
+        &quot;delay&quot;: 0,
+        &quot;initialtravelarrival&quot;: &quot;2016-01-24T13:00:00.000Z&quot;,
+        &quot;internationalname&quot;: &quot;LONDON, UK - HEATHROW&quot;,
+        &quot;nbrtravelers&quot;: 2,
+        &quot;pickupday&quot;: &quot;24-01-16&quot;,
+        &quot;status&quot;: &quot;ON TIME&quot;,
+        &quot;travelers&quot;: [
+            {
+                &quot;fromplace&quot;: &quot;LONDON, UK - HEATHROW&quot;,
+                &quot;g7pickupzone&quot;: &quot;TERMINAL ROISSY 3&quot;,
+                &quot;initialdueridetimestamp&quot;: 1453640400,
+                &quot;lastdueridetimestamp&quot;: 0,
+                &quot;pickupday&quot;: &quot;24-01-16&quot;,
+                &quot;refclient&quot;: &quot;DONALD DUCK&quot;,
+                &quot;requestedby&quot;: &quot;MICKEY MOUSE&quot;,
+                &quot;ridenumber&quot;: 31456,
+                &quot;ridestatus&quot;: &quot;CREATED&quot;,
+                &quot;subscriptioncode&quot;: &quot;2491&quot;,
+                &quot;travelid&quot;: &quot;BA334&quot;,
+                &quot;typeofplace&quot;: &quot;A&quot;
+            },
+            {
+                &quot;fromplace&quot;: &quot;LONDON, UK - HEATHROW&quot;,
+                &quot;g7pickupzone&quot;: &quot;TERMINAL ROISSY 3&quot;,
+                &quot;initialdueridetimestamp&quot;: 1453640400,
+                &quot;lastdueridetimestamp&quot;: 0,
+                &quot;pickupday&quot;: &quot;24-01-16&quot;,
+                &quot;refclient&quot;: &quot;DONALD DUCK&quot;,
+                &quot;requestedby&quot;: &quot;MINNIE MOUSE&quot;,
+                &quot;ridenumber&quot;: 31457,
+                &quot;ridestatus&quot;: &quot;CREATED&quot;,
+                &quot;subscriptioncode&quot;: &quot;2491&quot;,
+                &quot;travelid&quot;: &quot;BA334&quot;,
+                &quot;typeofplace&quot;: &quot;A&quot;
+            }
+        ],
+        &quot;travelid&quot;: &quot;BA334&quot;,
+        &quot;zone&quot;: &quot;TERMINAL ROISSY 3&quot;
+    }
+]
+</code></pre><hr>
+<h3 id="query-for-traveler-table">Query for traveler table</h3>
+<p>GET<br><a href="http://jws-test1/api/v1/travelers">http://jws-test1/v1/travelers</a></p>
+<p>Returns JSON array of travelers-order in TaxiPak that require pickup at airport or trainstation. </p>
+<pre><code>[
+    {
+        &quot;travelers&quot;: [
+            {
+                &quot;fromplace&quot;: &quot;Tokyo, Japan - Haneda &quot;,
+                &quot;g7pickupzone&quot;: &quot;TERMINAL ROISSY 3&quot;,
+                &quot;initialdueridetimestamp&quot;: 1454164800,
+                &quot;lastdueridetimestamp&quot;: 1454164800,
+                &quot;pickupday&quot;: &quot;30-01-16&quot;,
+                &quot;refclient&quot;: &quot;MR GHZONDROHTSU&quot;,
+                &quot;requestedby&quot;: &quot;MR GHZONDROHTSU&quot;,
+                &quot;ridenumber&quot;: 324681,
+                &quot;ridestatus&quot;: &quot;CREATED&quot;,
+                &quot;subscriptioncode&quot;: &quot;1676&quot;,
+                &quot;travelid&quot;: &quot;JL45&quot;,
+                &quot;typeofplace&quot;: &quot;A&quot;
+            },
+            {
+                &quot;fromplace&quot;: &quot;Casablanca, Morocco - Mohamed &quot;,
+                &quot;g7pickupzone&quot;: &quot;TERMINAL ROISSY 3&quot;,
+                &quot;initialdueridetimestamp&quot;: 1454165100,
+                &quot;lastdueridetimestamp&quot;: 1454165100,
+                &quot;pickupday&quot;: &quot;30-01-16&quot;,
+                &quot;refclient&quot;: &quot;MR ITWJPOUKHRWA&quot;,
+                &quot;requestedby&quot;: &quot;MR ITWJPOUKHRWA&quot;,
+                &quot;ridenumber&quot;: 3277830,
+                &quot;ridestatus&quot;: &quot;CREATED&quot;,
+                &quot;subscriptioncode&quot;: &quot;2284&quot;,
+                &quot;travelid&quot;: &quot;AT788&quot;,
+                &quot;typeofplace&quot;: &quot;A&quot;
+            }
+        ]
+    }
+]
+</code></pre><hr>
+<h3 id="add-a-traveler-record">Add a traveler record</h3>
+<h4 id="-gets-called-when-a-customer-orders-a-taxi-with-a-destination-at-an-airport-or-train-station-">(gets called when a customer orders a taxi with a destination at an airport or train station)</h4>
+<p>POST<br><a href="http://jws-test1/api/travelers">http://jws-test1/api/travelers/add</a></p>
+<p>Body contains</p>
+<pre><code>{
+    &quot;ridenumber&quot;: 31457,
+    &quot;travelid&quot;: &quot;BA334&quot;,
+    &quot;pickupday&quot;: &quot;24-01-16&quot;,
+    &quot;subscriptioncode&quot;: &quot;2491&quot;,
+    &quot;requestedby&quot;: &quot;MINNIE MOUSE&quot;,
+    &quot;refclient&quot;: &quot;DONALD DUCK&quot;,
+    &quot;g7pickupzone&quot;: &quot;TERMINAL ROISSY 3&quot;,
+    &quot;fromplace&quot;: &quot;LONDON, UK - HEATHROW&quot;,
+    &quot;typeofplace&quot;: &quot;A&quot;,
+    &quot;initialdueridetimestamp&quot;: 1453640400
+}
+</code></pre><hr>
+<h3 id="delete-a-record-from-the-travelers-table-using-the-order-id-from-taxipak">Delete a record from the travelers table using the order ID from TaxiPak</h3>
+<p>POST<br><a href="http://jws-test1/api/travelers/delete">http://jws-test1/api/travelers/delete</a></p>
+<p>Body contains</p>
+<pre><code>{
+    &quot;ridenumber&quot;: 31457
+}
+</code></pre><hr>
+<h3 id="update-an-existing-traveler-record">Update an existing traveler record</h3>
+<p>POST<br><a href="http://jws-test1/api/travelers/update">http://jws-test1/api/travelers/update</a></p>
+<p>Body contains</p>
+<pre><code>{
+    &quot;ridenumber&quot;: 31457,
+    &quot;travelid&quot;: &quot;BA334&quot;,
+    &quot;pickupday&quot;: &quot;24-01-16&quot;,
+    &quot;subscriptioncode&quot;: &quot;2491&quot;,
+    &quot;requestedby&quot;: &quot;MINNIE MOUSE&quot;,
+    &quot;refclient&quot;: &quot;DONALD DUCK&quot;,
+    &quot;g7pickupzone&quot;: &quot;TERMINAL ROISSY 3&quot;,
+    &quot;fromplace&quot;: &quot;LONDON, UK - HEATHROW&quot;,
+    &quot;typeofplace&quot;: &quot;A&quot;,
+    &quot;initialdueridetimestamp&quot;: 1453640400
+}
+</code></pre><hr>
+<h3 id="view-of-travel-board-flights-and-passengers">View of &#39;Travel Board&#39; - flights and passengers</h3>
+<p><a href="http://jws-test1/viewTravelBoard">http://jws-test1/viewTravelBoard</a></p>
+<h3 id="view-of-travelers-just-pending-passengers">View of Travelers - just pending passengers</h3>
+<p><a href="http://jws-test1/viewTravelers">http://jws-test1/viewTravelers</a></p>
+<hr>
+<h3 id="clear-database-tables-for-testing">Clear database tables for testing</h3>
+<p><a href="http://jws-test1/test/clear">http://jws-test1/test/clear</a></p>
+<h3 id="populate-database-tables-with-data-for-testing">Populate database tables with data for testing</h3>
+<p><a href="http://jws-test1/test/harness/2016/01/16/22/CDG">http://jws-test1/test/harness/2016/01/16/22/CDG</a></p>
+<p>where: </p>
+<pre><code>    /{YYYY}/{MM}/{DD}/{HH}/{IATA_AIRPORT_CODE}
+</code></pre>
