@@ -1,24 +1,29 @@
 # G7 Flight Stats Integration
 
-Create PSQL database named 'nouvel_ui'
+Create PSQL database named 'nouvel_ui (not needed unless testing locally)'
 
 Create schema and restore some test data
 ```
 psql  nouvel_ui < nouvel_ui.sql
 ```
 ---
-Production start:
+Production start (on jws-test1 server):
 ```
-$ npm start
+# service g7-travel start
 ```
 Debug start:
 ```
 $ node debug bin/www
 ```
+Production stop (on jws-test1 server):
+```
+# service g7-travel stop
+```
+
 ---
 ###  Query for flights/customer table
 GET
-[http://localhost:3000/api/v1/travelboard](http://localhost:3000/api/v1/travelboard)
+[http://jws-test1/api/v1/travelboard](http://jws-test1/api/v1/travelboard)
 
 Returns JSON array of flights being actively checked for status. Each flight contains an array of 
 travelers who are on the flight and have requested a taxi
@@ -71,7 +76,7 @@ travelers who are on the flight and have requested a taxi
 ---
 ###  Query for traveler table
 GET
-[http://localhost:3000/api/v1/travelers](http://localhost:3000/api/v1/travelers)
+[http://jws-test1/v1/travelers](http://jws-test1/api/v1/travelers)
 
 Returns JSON array of travelers-order in TaxiPak that require pickup at airport or trainstation. 
 ```
@@ -114,7 +119,7 @@ Returns JSON array of travelers-order in TaxiPak that require pickup at airport 
 ### Add a traveler record 
 #### (gets called when a customer orders a taxi with a destination at an airport or train station)
 POST
-[http://localhost:3000/api/travelers](http://localhost:3000/api/travelers)
+[http://jws-test1/api/travelers/add](http://jws-test1/api/travelers)
 
 Body contains
 ```
@@ -131,50 +136,51 @@ Body contains
     "initialdueridetimestamp": 1453640400
 }
 ```
-
----
-### Add a traveler record from legacy TaxiPak system
-#### this system only supports HTTP GET
-GET
-[http://localhost:3000/api/travelers/:orderid?params](http://localhost:3000/api/travelers/:orderid?params)
-
-Parameters must include:
-```
-?travelid={flight or train number}
-&pickupday={DD-MM-YY}
-&subscriptioncode={account code}
-&requestedby={who made order request}
-&refclient={customer name}
-&g7pickupzone={internal description of TaxiPak zone}
-&fromplace={location of origin of travel}
-&typeofplace={A|G}
-&initialduetime={UNIX datetime stamp}
-```
-
 ---
 ### Delete a record from the travelers table using the order ID from TaxiPak
-DELETE
-[http://localhost:3000/api/travelers/:orderid](http://localhost:3000/api/travelers/:orderid)
+POST
+[http://jws-test1/api/travelers/delete](http://jws-test1/api/travelers/delete)
 
-### Delete a record from the travelers table from legacy TaxiPak system
-### this system only supports HTTP GET
-GET
-[http://localhost:3000/api/travelers/delete/:orderid](http://localhost:3000/api/travelers/delete/:orderid)
+Body contains
+```
+{
+    "ridenumber": 31457
+}
+```
+---
+### Update an existing traveler record
+POST
+[http://jws-test1/api/travelers/update](http://jws-test1/api/travelers/update)
 
+Body contains
+```
+{
+    "ridenumber": 31457,
+    "travelid": "BA334",
+    "pickupday": "24-01-16",
+    "subscriptioncode": "2491",
+    "requestedby": "MINNIE MOUSE",
+    "refclient": "DONALD DUCK",
+    "g7pickupzone": "TERMINAL ROISSY 3",
+    "fromplace": "LONDON, UK - HEATHROW",
+    "typeofplace": "A",
+    "initialdueridetimestamp": 1453640400
+}
+```
 ---
 ### View of 'Travel Board' - flights and passengers
 
-[http://localhost:3000/viewTravelBoard](http://localhost:3000/viewTravelBoard)
+[http://jws-test1/viewTravelBoard](http://jws-test1/viewTravelBoard)
 
 ### View of Travelers - just pending passengers
-[http://localhost:3000/viewTravelers](http://localhost:3000/viewTravelers)
+[http://jws-test1/viewTravelers](http://jws-test1/viewTravelers)
 
 ---
 ### Clear database tables for testing
-[http://localhost:3000/test/clear](http://localhost:3000/test/clear)
+[http://jws-test1/test/clear](http://jws-test1/test/clear)
 
 ### Populate database tables with data for testing 
-[http://localhost:3000/test/harness/2016/01/16/22/CDG](http://localhost:3000/test/harness/2016/01/16/22/CDG)
+[http://jws-test1/test/harness/2016/01/16/22/CDG](http://jws-test1/test/harness/2016/01/16/22/CDG)
 
 where: 
 ```

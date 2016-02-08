@@ -11,7 +11,7 @@ app.controller('mainController', function($scope, $http, $timeout) {
       },
       enableColumnMenus: false,
       enableSorting: false,
-      rowTemplate: '<div ng-class="{\'red\':row.entity.delay>15,  \'yellow\':row.entity.delay<10 && row.entity.delay>0,  \'green\':row.entity.delay<1}" <div ng-repeat="col in colContainer.renderedColumns track by col.colDef.field"  class="ui-grid-cell" ui-grid-cell></div></div>',
+      rowTemplate: '<div ng-class="{\'red\':row.entity.delay>15,  \'yellow\':row.entity.delay>0,  \'green\':row.entity.delay<1}" <div ng-repeat="col in colContainer.renderedColumns track by col.colDef.field"  class="ui-grid-cell" ui-grid-cell></div></div>',
 
       columnDefs: [
         {name:'Sched Time', field:'origarrtime', width:120},
