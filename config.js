@@ -12,7 +12,7 @@ var Config = {
   flightstatsAppKey : '9d22bfb7f120c06a2451fa16bd388552',
   firstCheckTime: 48400,
   tzDesc: 'CET',
-  
+
   //Logging
   logDirectory: './logs',
   logLevel: 'debug'
