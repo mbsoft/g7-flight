@@ -161,7 +161,7 @@ li.expander a{
   color: #ffffff;
 }
 
-li.alert, li.departure, li.product, li.status, li.time, li.time2, li.delay, li.from, li.track, li.place, li.expander {
+li.alert, li.departure, li.product, li.status, li.stime, li.atime, li.delay, li.from, li.track, li.place, li.expander {
   float: left;
   margin: 2px 14px 2px 0;
 }
@@ -169,10 +169,10 @@ li.alert, li.departure, li.product, li.status, li.time, li.time2, li.delay, li.f
 li.expander {
   width: 10px;
 }
-li.time {
+li.stime {
   width: 110px;
 }
-li.time2 {
+li.atime {
   width: 110px;
 }
 li.delay {

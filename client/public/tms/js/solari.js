@@ -44,14 +44,12 @@ var ATIME_BOXES = 4;
 var TRACK_BOXES = 2; // number of letter boxes displayed in the track column
 var REFRESH_TIME = 60; //refresh time in seconds
 var EMPTY_ROW = {
-    "sarrtime": "",
-    "earrtime": "",
-    "delay": "",
-    "sDeparture": "",
-    "from": "",
-    "place" : "",
-    "nStatus": 0,
-    "nRides" : 0
+    "status": "",
+    "origarrtime": "",
+    "delay": 0,
+    "arrtime": "",
+    "zone": "",
+    "nbrtravelers" : 0
 };
 
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
@@ -87,6 +85,7 @@ function ToUpper(code) {
 
 //constructs the solariBoard within the given div. If no parameter is given, adds the board to "body"
 function addSolariBoard(divSelector) {
+    console.log('add solari board');
     if (solari_setup_done === 1) {
         return;
     }
@@ -102,10 +101,13 @@ function addSolariBoard(divSelector) {
             "<div id=\"solari\" class=\"panel\">" +
             "<div id=\"departures\">" +
             "<header class=\"solari-board-header rounded\"> " +
-            "<div class=\"solari-board-icon\"> </div>" +
+            "<div class=\"solari-board-icon\">Travel Monitor</div>" +
             "<div class=\"clockContainer\">" +
             "<ul class=\"clockList\">" +
-            "<li id=\"hours\">Travel Monitor</li>" +
+            "<li id=\"hours\">12</li>" +
+            "<li id=\"point\">:</li>" +
+            "<li id=\"min\">00</li>" +
+            "<li id=\"ampm\"> pm</li>" +
             "</ul>" +
             "</div>" +
             "<div id=\"next-due\">" +
@@ -119,9 +121,9 @@ function addSolariBoard(divSelector) {
             "<ul class=\"solari-board-columns rounded\">" +
             "<li class=\"expander\"></li>" +
             "<li class=\"status\"></li>" +
-            "<li class=\"time\">Scheduled</li>" +
+            "<li class=\"stime\">Scheduled</li>" +
             "<li class=\"delay\">Delay</li>" +
-            "<li class=\"time2\">Actual</li>" +
+            "<li class=\"atime\">Actual</li>" +
             "<li class=\"departure\">Flight-Departure City</li>" +
             "<li class=\"rides\">Rides</li>" +
             "</ul>" +
@@ -137,18 +139,16 @@ function addSolariBoard(divSelector) {
 
     //set up clock
     setInterval(function () {
-        var date = new Date();
-        // Convert to 12 hour format
-        var hours = date.getHours();
+        var hours = moment().format('HH');
         //$("#hours").html(hours === 0 ? 12 : (hours > 12 ? hours - 12 : hours));
-        $("#hours").html((hours < 10 ? "0":"") + hours);
+        $("#hours").html(hours);
         // Add a leading zero to the minutes value and am/pm
-        var minutes = date.getMinutes();
-        $("#min").html((minutes < 10 ? "0" : "") + minutes);
+        var minutes = moment().format('mm');
+        $("#min").html(minutes);
 
         // Set am/pm
-        //$("#ampm").html(hours < 12 ? " am" : " pm");
-    }, 15000); // every 15 seconds is plenty accurate
+        $("#ampm").html(moment().format('a'));
+    }, 1000); // every 15 seconds is plenty accurate
 
 
     // show the solari board.
@@ -188,25 +188,23 @@ function addSolariBoard(divSelector) {
             $section = $('#departures .solari-board-rows');
         }
         // add a row
-        //$section.append('<li class=board-data id=row' + add_rows + '><ul><li class=time></li><li class=time2></li><li class=departure></li></li><li class=status><div class=iconbox><div class=status-icon></div></div></li><li class="track"></li><li class=alert><span //class="circle"></span></li></ul></li>');
-
-        $section.append('<li class=board-data id=row' + add_rows + '><ul><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status></li><li class=time></li><li class=delay></li><li class=time2></li><li class=departure></li><li class="rides"></li></ul></li>');
+        $section.append('<li class=board-data id=row' + add_rows + '><ul><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status></li><li class=stime></li><li class=delay></li><li class=atime></li><li class=departure></li><li class="rides"></li></ul></li>');
 
         // add the letter boxes in the time column
         for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
-            $('#row' + add_rows + ' li.time').append('<div id=time-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
+            $('#row' + add_rows + ' li.stime').append('<div id=stime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
             // insert a dot after the second box
             if (add_time_col === 1) {
-                $('#row' + add_rows + ' li.time').append('<div class=dot>H</div>');
+                $('#row' + add_rows + ' li.stime').append('<div class=dot>H</div>');
             }
         }
 
         // add the letter boxes in the time column
         for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
-            $('#row' + add_rows + ' li.time2').append('<div id=atime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
+            $('#row' + add_rows + ' li.atime').append('<div id=atime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
             // insert a dot after the second box
             if (add_time_col === 1) {
-                $('#row' + add_rows + ' li.time2').append('<div class=dot>H</div>');
+                $('#row' + add_rows + ' li.atime').append('<div class=dot>H</div>');
             }
         }
 
@@ -253,9 +251,20 @@ function updateSolariTable(board){
 function UpdateSolariRow(row, current_row, new_row) {
     var rate = RATE_BASE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE;
 
-    SpinChars(rate, '#time-row' + row, TIME_BOXES, current_row.arrtime.replace(":",""), new_row.arrtime.replace(":",""));
-    SpinChars(rate, '#atime-row' + row, TIME_BOXES, current_row.arrtime.replace(":",""), new_row.arrtime.replace(":",""));
-    SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_row.internationalname, new_row.internationalname);
+    //console.log(row, current_row, new_row);
+
+     var current_arrtime = moment.unix(current_row.arrtime).format('HHmm');
+     var new_arrtime = moment.unix(new_row.arrtime).format('HHmm');
+     SpinChars(rate, '#stime-row' + row, TIME_BOXES, current_arrtime.toString(), new_arrtime.toString());
+
+     console.log(new_row.delay.toString());
+     SpinChars(rate, '#delay-row' + row, DELAY_BOXES, current_row.delay.toString(), new_row.delay.toString());
+
+    var current_origarrtime = moment.unix(current_row.origarrtime).format('HHmm');
+    var new_origarrtime = moment.unix(new_row.origarrtime).format('HHmm');
+    SpinChars(rate, '#atime-row' + row, TIME_BOXES, current_origarrtime.toString(), new_origarrtime.toString());
+
+    SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_row.zone, new_row.zone);
 
     //turn track numbers into strings for display. Ensure they are always two chars long
    // current_row.sTrack = current_row === EMPTY_ROW ? "" : current_row.nTrack === -1? "--" : current_row.nTrack.toString().length > 1 ? current_row.nTrack.toString() : "0" + current_row.nTrack.toString();
@@ -357,7 +366,7 @@ function GetFailBoard() {
         board[row] = {
             "sTime": "",
             "aTime": "",
-            "sDeparture": fail_whale[row],
+            "zone": fail_whale[row],
             "nStatus": 0,
             "nTrack": 0
         };
@@ -370,50 +379,54 @@ function updateSolariBoard() {
         return;
     }
     syncing = true;
-    $.getJSON("http://localhost:3000/api/v1/travelers", function(new_board) {
-//       $.getJSON("http://localhost:3000/solari-board-master/example/data.json", function(new_board) {
-            syncing = false;
-            if (new_board === null) {
-                //the last updated footer won't get refreshed, but if data is null, it probably shouldn't
-                return;
+    console.log('update solariboard');
+    $.getJSON(URL, function(new_board) {
+        console.log(new_board);
+        syncing = false;
+        if (new_board === null) {
+            //the last updated footer won't get refreshed, but if data is null, it probably shouldn't
+            return;
+        }
+        //redraw label if recovering from a fail
+        $("ul.solari-board-columns li.departure").text("Flight-Departure City");
+        if (new_board.length === 0) {
+            clearBoard();
+        } else {
+            //the next due box should display information on the row for which time info is available, which may not be from the first case
+            var i, stime, atime;
+            for (i=0; i < BOARD_ROWS; i++) {
+                stime = new_board[i].arrtime;
+                atime = new_board[i].arrtime;
+                if (typeof stime !== "undefined" && stime !== "")
+                    break;
             }
-            //redraw label if recovering from a fail
-            $("ul.solari-board-columns li.departure").text("Flight - Departure City");
-            if (new_board.length === 0) {
-                clearBoard();
-            } else {
-                //the next due box should display information on the row for which time info is available, which may not be from the first case
-                var i, time, atime;
-                for (i=0; i < BOARD_ROWS; i++) {
-                    time = new_board[i].arrtime;
-                    atime = new_board[i].arrtime;
-                    if (typeof time !== "undefined" && time !== "")
-                        break;
-                }
-                var next_due_row = new_board[i];
+            var next_due_row = new_board[i];
 
-                //now that the nStatus values have been set, update the board
-                updateSolariTable(new_board);
-            }
-            // update last refresh time text
-            $('#last-updated span').fadeOut("slow", function() {
-                var now = new Date();
-                $('#last-updated span').html(now.toLocaleString('fr-FR',{hour12: false}));
-            }).fadeIn("slow");
-        }).error(function () {
-            syncing = false;
-            updateSolariTable(GetFailBoard());
-            NextDue("#next-due", '-FA1L-', '', '');
-            $("ul.solari-board-columns li.departure").text("FAIL WHALE");
-        });
+            //now that the nStatus values have been set, update the board
+            updateSolariTable(new_board);
+        }
+        // update last refresh time text
+        $('#last-updated span').fadeOut("slow", function() {
+            var now = moment().local('fr-FR');
+            console.log(now);
+            $('#last-updated span').html(now);
+        }).fadeIn("slow");
+    }).error(function () {
+        syncing = false;
+        updateSolariTable(GetFailBoard());
+        NextDue("#next-due", '-FA1L-', '', '');
+        $("ul.solari-board-columns li.departure").text("FAIL WHALE");
+    });
 }
 
 function clearBoard() {
     //stop all animations
-    $(".time").children().stop(true, true);
-    $(".departure").children().stop(true, true);
     $(".status").children().stop(true, true);
-    $(".track").children().stop(true, true);
+    $(".stime").children().stop(true, true);
+    $(".delay").children().stop(true, true);
+    $(".atime").children().stop(true, true);
+    $(".departure").children().stop(true, true);
+    $(".rides").children().stop(true, true);
     //clear the next due and all rows
     NextDue("#next-due", '00:00', '', '');
     for (var r = 0; r < BOARD_ROWS; r++) {
