@@ -179,16 +179,10 @@ li.delay {
   width: 50px;
 }
 li.departure {
-  width: 195px;
-}
-li.from {
-  width: 145px;
+  width: 775px;
 }
 li.status {
-  width: 200px;
-}
-li.place {
-  width: 240px;
+  width: 30px;
 }
 li.alert {
   width: 10px;

@@ -36,11 +36,8 @@ var LAST_CHAR_CODE = 96; // the last ASCII character that is represented in the 
 var CHAR_FACTOR = 2; // every N character in the letter image is a "real" character
 var IMAGE_HEIGHT = 20; // height of a single product or status image frame (in pixels)
 var IMAGE_FACTOR = 2; // every N picture in the letter image is a "real" image (i.e., not an in-between frame)
-var DEPARTURE_BOXES = 8; // number of letter boxes displayed in the departure column
+var DEPARTURE_BOXES = 32; // number of letter boxes displayed in the departure column
 var DELAY_BOXES = 2;
-var FROM_BOXES = 6;
-var PLACE_BOXES = 10;
-var STATUS_BOXES = 8;
 var TIME_BOXES = 4; // number of letter boxes displayed in the time column
 var RIDES_BOXES = 2;
 var ATIME_BOXES = 4;
@@ -121,13 +118,11 @@ function addSolariBoard(divSelector) {
             "</header>" +
             "<ul class=\"solari-board-columns rounded\">" +
             "<li class=\"expander\"></li>" +
+            "<li class=\"status\"></li>" +
             "<li class=\"time\">Scheduled</li>" +
-            "<li class=\"time\">Actual</li>" +
             "<li class=\"delay\">Delay</li>" +
-            "<li class=\"departure\">Flight/Train</li>" +
-            "<li class=\"from\">From</li>" +
-            "<li class=\"place\">Place</li>" +
-            "<li class=\"status\">Status</li>" +
+            "<li class=\"time2\">Actual</li>" +
+            "<li class=\"departure\">Flight-Departure City</li>" +
             "<li class=\"rides\">Rides</li>" +
             "</ul>" +
             "<ul class=\"solari-board-rows rounded\">" +
@@ -195,7 +190,7 @@ function addSolariBoard(divSelector) {
         // add a row
         //$section.append('<li class=board-data id=row' + add_rows + '><ul><li class=time></li><li class=time2></li><li class=departure></li></li><li class=status><div class=iconbox><div class=status-icon></div></div></li><li class="track"></li><li class=alert><span //class="circle"></span></li></ul></li>');
 
-        $section.append('<li class=board-data id=row' + add_rows + '><ul><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=time></li><li class=time2></li><li class=delay></li><li class=departure></li><li class=from></li><li class="place"></li><li class=status></li><li class="rides"></li><li class=alert></li></ul></li>');
+        $section.append('<li class=board-data id=row' + add_rows + '><ul><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status></li><li class=time></li><li class=delay></li><li class=time2></li><li class=departure></li><li class="rides"></li></ul></li>');
 
         // add the letter boxes in the time column
         for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
@@ -223,21 +218,6 @@ function addSolariBoard(divSelector) {
         // add the letter boxes in the middle column
         for (var add_cols = 0; add_cols < DEPARTURE_BOXES; add_cols++) {
             $('#row' + add_rows + ' li.departure').append('<div id=departure-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
-        }
-
-        // add the letter boxes in the middle column
-        for (var add_cols = 0; add_cols < FROM_BOXES; add_cols++) {
-            $('#row' + add_rows + ' li.from').append('<div id=from-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
-        }
-
-        // add the letter boxes in the track column
-        for (var add_track_col = 0; add_track_col < PLACE_BOXES; add_track_col++) {
-            $('#row' + add_rows + ' li.place').append('<div id=place-row' + add_rows + 'box' + add_track_col + ' class=letterbox></div>');
-        }
-
-        // add the letter boxes in the rides column
-        for (var add_rides_col = 0; add_rides_col < STATUS_BOXES; add_rides_col++) {
-            $('#row' + add_rows + ' li.status').append('<div id=status-row' + add_rows + 'box' + add_rides_col + ' class=letterbox></div>');
         }
 
         // add the letter boxes in the rides column
