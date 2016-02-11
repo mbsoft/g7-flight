@@ -46,10 +46,10 @@ var REFRESH_TIME = 60; //refresh time in seconds
 var EMPTY_ROW = {
     "status": "",
     "origarrtime": "",
-    "delay": 0,
+    "delay": "",
     "arrtime": "",
     "zone": "",
-    "nbrtravelers" : 0
+    "nbrtravelers" : ""
 };
 
 // Define Moments Locale
@@ -57,7 +57,8 @@ moment.locale('fr');
 
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
 var status_override = true;
-var URL = "http://local.g7-flight.com:3000/api/v1/travelboard"
+var URL = "http://local.g7-flight.com:3000/api/v1/travelboard";
+var URL = "travelboard.json";
 
 //used to add extra params that change over time.  /example_realtime makes use of this
 var URL_SUFFIX = "";
@@ -252,109 +253,51 @@ function updateSolariTable(board){
 }
 
 function UpdateSolariRow(row, current_row, new_row) {
-    var rate = RATE_BASE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE;
 
-    //console.log(row, current_row, new_row);
-    var current_arrtime = "";
-    if (typeof current_row.arrtime == 'number') {
-        current_arrtime = moment(current_row.arrtime, 'x').format('HHmm');
+    if (typeof current_row.arrtime == 'number' && current_row.arrtime != "") {
+        current_row.arrtime = moment(current_row.arrtime, 'x').format('HHmm');
     }
-     var new_arrtime = moment(new_row.arrtime, 'x').format('HHmm');
-
-     SpinChars(rate, '#stime-row' + row, TIME_BOXES, current_arrtime, new_arrtime);
-
-     current_row.delay = current_row === EMPTY_ROW ? "" : current_row.delay === -1? "--" : current_row.delay.toString().length > 1 ? current_row.delay.toString() : "0" + current_row.delay.toString();
-    new_row.delay = new_row === EMPTY_ROW ? "" : new_row.delay === -1? "--" :new_row.delay.toString().length > 1 ? new_row.delay.toString() : "0" + new_row.delay.toString();
-    SpinChars(rate, '#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
-
-    var current_origarrtime = "";
-    if (typeof current_row.origarrtime == 'number') {
-        current_origarrtime = moment(current_row.origarrtime, 'x').format('HH:mm');
+    if (typeof current_row.arrtime == 'number' && current_row.arrtime != "") {
+        new_row.arrtime = moment(new_row.arrtime, 'x').format('HHmm');
     }
-    var new_origarrtime = moment(new_row.origarrtime, 'x').format('HHmm');
-    SpinChars(rate, '#atime-row' + row, TIME_BOXES, current_origarrtime, new_origarrtime);
+    InsertChars('#stime-row' + row, TIME_BOXES, current_row.arrtime, new_row.arrtime);
 
-    SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_row.zone, new_row.zone);
+    current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 2);
+    new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 2);
+    InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
 
-    current_row.nbrtravelers = current_row === EMPTY_ROW ? "" : current_row.nbrtravelers === -1? "--" : current_row.nbrtravelers.toString().length > 1 ? current_row.nbrtravelers.toString() : "0" + current_row.nbrtravelers.toString();
-    new_row.nbrtravelers = new_row === EMPTY_ROW ? "" : new_row.nbrtravelers === -1? "--" :new_row.nbrtravelers.toString().length > 1 ? new_row.nbrtravelers.toString() : "0" + new_row.nbrtravelers.toString();
-     SpinChars(rate, '#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers);
+    if (typeof current_row.origarrtime == 'number' && current_row.origarrtime != "") {
+        current_row.origarrtime = moment(current_row.origarrtime, 'x').format('HHmm');
+    }
+    if (typeof current_row.origarrtime == 'number' && current_row.origarrtime != "") {
+        new_row.origarrtime = moment(new_row.origarrtime, 'x').format('HHmm');
+    }
+    InsertChars('#atime-row' + row, TIME_BOXES, current_row.origarrtime, new_row.origarrtime);
+    InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_row.zone, new_row.zone);
+
+    current_row.nbrtravelers = current_row.nbrtravelers === "" ? "" : padLeft(current_row.nbrtravelers, 2);
+    new_row.nbrtravelers = new_row.nbrtravelers === "" ? "" : padLeft(new_row.nbrtravelers, 2);
+    InsertChars('#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers);
 
     //clear and apply light class
-   $("#row" + row + " span").attr('class', 'circle');
-   $("#row" + row + " span").addClass(new_row.bLight ? 'circle-on' : 'circle');
+   // $("#row" + row + " span").attr('class', 'circle');
+   // $("#row" + row + " span").addClass(new_row.bLight ? 'circle-on' : 'circle');
 }
 
-function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text) {
-    //populate each box
-    var num_spins = 0;
+function InsertChars(selector_prefix, max_boxes, current_text, new_text) {
     for (var box = 0; box < max_boxes; box++) {
-        // get the to and from character codes for this box
-        var to_char_code = ToUpper(((new_text.toString().length > box) ? new_text.toString().charCodeAt(box) : 32));
-        var from_char_code = ToUpper(((current_text.toString().length > box) ? current_text.toString().charCodeAt(box) : 32));
-        var final_pos = '';
-        if (from_char_code > to_char_code) {
-            // (96 - 56) + (52 - 32) * 2 = 120
-            num_spins = ((LAST_CHAR_CODE - from_char_code) + (to_char_code - FIRST_CHAR_CODE)) * CHAR_FACTOR;
-            // ((26 * (52 - 32)) * 2) * -1
-            final_pos = ((LETTER_HEIGHT * (to_char_code - FIRST_CHAR_CODE)) * CHAR_FACTOR) * -1;
+        var selector = selector_prefix + 'box' + box;
+
+        if (new_text !== undefined) {
+            if (new_text === 0) {
+                var character = "0";
+            } else {
+                var character = new_text.toString().charAt(box);
+            }
+            $(selector).html('<span class="board-text">'+character+'</span>');
         } else {
-            num_spins = (to_char_code - from_char_code) * CHAR_FACTOR;
+            $(selector).html('<span class="board-text"></span>');
         }
-
-        var selector = selector_prefix + 'box' + box; // add the box part
-        SpinIt(selector, num_spins, rate, LETTER_HEIGHT, final_pos);
-    }
-}
-
-function SpinImage(rate, selector, from_pos, to_pos) {
-    var final_pos = '';
-    var num_spins = 0;
-
-    if (from_pos > to_pos) {
-        num_spins = (((LAST_STATUS - from_pos) + to_pos) * IMAGE_FACTOR);
-        final_pos = ((IMAGE_HEIGHT * to_pos) * IMAGE_FACTOR) * -1;
-    } else {
-        num_spins = ((to_pos - from_pos) * IMAGE_FACTOR);
-    }
-
-    if (from_pos === 4 && to_pos === 0) {
-        num_spins = 8;
-    }
-
-    //unless we're not moving at all, make the image go 'round 8 more times that it needs to, otherwise it finishes too fast.
-    if (num_spins !== 0) {
-        $('audio#solari-audio')[0].play();
-        num_spins +=80;
-    }
-    SpinIt(selector, num_spins, rate, IMAGE_HEIGHT, final_pos);
-}
-
-function SpinIt(selector, num_spins, rate, pixel_distance, final_pos) {
-    var bpX = $(selector).css('backgroundPosition').split(' ')[0];
-    var bpY = $(selector).css('backgroundPosition').split(' ')[1];
-    var updateBpY = function (yDelta) {
-        bpY = (parseFloat(bpY) + yDelta) + 'px';
-        return bpX + ' ' + bpY;
-    };
-
-    for (var ii = 0; ii < num_spins; ii++) {
-        $(selector).transition(
-            {backgroundPosition: updateBpY(-(pixel_distance * 2))},
-            {duration: 1, easing: "linear"}
-        );
-        $(selector).transition(
-            {backgroundPosition: updateBpY(1)},
-            {duration: rate, easing: "linear"}
-        );
-        // on the very last iteration, use a call back to set the background position to the "real" position
-        var f = function () {};
-        if ((final_pos !== '') && (ii === (num_spins-1))) {
-            f = function() {
-                $(selector).css('backgroundPosition', bpX + ' ' + final_pos);
-            };
-        }
-        $(selector).transition({backgroundPosition: updateBpY((pixel_distance - 1))}, 1, f);
     }
 }
 
@@ -373,12 +316,12 @@ function GetFailBoard() {
     // update each row on the board
     for (var row = 0; row < BOARD_ROWS; row++) {
         board[row] = {
+            "status": "",
             "origarrtime": "",
             "delay": 0,
             "arrtime": "",
             "zone": fail_whale[row],
-            "status": 0,
-            "rides": 0
+            "nbrtravelers": 0,
         };
     }
     return board;
