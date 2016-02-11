@@ -272,7 +272,14 @@ function UpdateSolariRow(row, current_row, new_row) {
         new_row.origarrtime = moment(new_row.origarrtime, 'x').format('HHmm');
     }
     InsertChars('#atime-row' + row, TIME_BOXES, current_row.origarrtime, new_row.origarrtime);
-    InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_row.zone, new_row.zone);
+
+    var current_departure = "";
+    var new_departure = "";
+    console.log(new_row.internationalname);
+    if (new_row.travelers) {
+        var new_departure = new_row.travelers[0].g7pickupzone +' '+new_row.travelers[0].travelid +' '+new_row.internationalname;
+    }
+    InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure);
 
     current_row.nbrtravelers = current_row.nbrtravelers === "" ? "" : padLeft(current_row.nbrtravelers, 2);
     new_row.nbrtravelers = new_row.nbrtravelers === "" ? "" : padLeft(new_row.nbrtravelers, 2);
