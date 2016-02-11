@@ -275,9 +275,10 @@ function UpdateSolariRow(row, current_row, new_row) {
 
     var current_departure = "";
     var new_departure = "";
-    console.log(new_row.internationalname);
     if (new_row.travelers) {
         var new_departure = new_row.travelers[0].g7pickupzone +' '+new_row.travelers[0].travelid +' '+new_row.internationalname;
+    } else {
+        new_departure = new_row.zone;
     }
     InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure);
 
