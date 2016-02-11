@@ -28,7 +28,7 @@
 // some constants and enums
 var RATE_VARIANCE = 8; // for determining random animation rate in milliseconds
 var RATE_BASE = 8; // for determining random animation rate in milliseconds
-var BOARD_ROWS = 8; // total number of rows displayed on the solari board
+var BOARD_ROWS = 16; // total number of rows displayed on the solari board
 var SECOND_SECTION_START = 8; // the first row that contains a next due case
 var LETTER_HEIGHT = 26; // height of a single letter frame (in pixels) in the letter image
 var FIRST_CHAR_CODE = 32; // the first ASCII character that is represented in the letter image
@@ -57,7 +57,7 @@ moment.locale('fr');
 
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
 var status_override = true;
-var URL = "travelboard.json"
+var URL = "http://local.g7-flight.com:3000/api/v1/travelboard"
 
 //used to add extra params that change over time.  /example_realtime makes use of this
 var URL_SUFFIX = "";
@@ -255,26 +255,23 @@ function UpdateSolariRow(row, current_row, new_row) {
     var rate = RATE_BASE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE;
 
     //console.log(row, current_row, new_row);
+    var current_arrtime = "";
     if (typeof current_row.arrtime == 'number') {
-        var current_arrtime = moment(current_row.arrtime, 'x').format('HH:mm');
-    } else {
-        var current_arrtime = moment().format('HHmm');
+        current_arrtime = moment(current_row.arrtime, 'x').format('HHmm');
     }
      var new_arrtime = moment(new_row.arrtime, 'x').format('HHmm');
-     console.log(current_arrtime);
-     console.log(new_arrtime);
+
      SpinChars(rate, '#stime-row' + row, TIME_BOXES, current_arrtime, new_arrtime);
 
      current_row.delay = current_row === EMPTY_ROW ? "" : current_row.delay === -1? "--" : current_row.delay.toString().length > 1 ? current_row.delay.toString() : "0" + current_row.delay.toString();
     new_row.delay = new_row === EMPTY_ROW ? "" : new_row.delay === -1? "--" :new_row.delay.toString().length > 1 ? new_row.delay.toString() : "0" + new_row.delay.toString();
-     SpinChars(rate, '#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
+    SpinChars(rate, '#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
 
+    var current_origarrtime = "";
     if (typeof current_row.origarrtime == 'number') {
-        var current_origarrtime = moment(current_row.origarrtime, 'x').format('HH:mm');
-    } else {
-        var current_origarrtime = moment().format('HHmm');
+        current_origarrtime = moment(current_row.origarrtime, 'x').format('HH:mm');
     }
-     var new_origarrtime = moment(new_row.origarrtime, 'x').format('HHmm');
+    var new_origarrtime = moment(new_row.origarrtime, 'x').format('HHmm');
     SpinChars(rate, '#atime-row' + row, TIME_BOXES, current_origarrtime, new_origarrtime);
 
     SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_row.zone, new_row.zone);
@@ -284,8 +281,8 @@ function UpdateSolariRow(row, current_row, new_row) {
      SpinChars(rate, '#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers);
 
     //clear and apply light class
-   // $("#row" + row + " span").attr('class', 'circle');
-   // $("#row" + row + " span").addClass(new_row.bLight ? 'circle-on' : 'circle');
+   $("#row" + row + " span").attr('class', 'circle');
+   $("#row" + row + " span").addClass(new_row.bLight ? 'circle-on' : 'circle');
 }
 
 function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text) {
@@ -293,15 +290,18 @@ function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text) {
     var num_spins = 0;
     for (var box = 0; box < max_boxes; box++) {
         // get the to and from character codes for this box
-        var to_char_code = ToUpper(((new_text.length > box) ? new_text.charCodeAt(box) : 32));
-        var from_char_code = ToUpper(((current_text.length > box) ? current_text.charCodeAt(box) : 32));
+        var to_char_code = ToUpper(((new_text.toString().length > box) ? new_text.toString().charCodeAt(box) : 32));
+        var from_char_code = ToUpper(((current_text.toString().length > box) ? current_text.toString().charCodeAt(box) : 32));
         var final_pos = '';
         if (from_char_code > to_char_code) {
+            // (96 - 56) + (52 - 32) * 2 = 120
             num_spins = ((LAST_CHAR_CODE - from_char_code) + (to_char_code - FIRST_CHAR_CODE)) * CHAR_FACTOR;
+            // ((26 * (52 - 32)) * 2) * -1
             final_pos = ((LETTER_HEIGHT * (to_char_code - FIRST_CHAR_CODE)) * CHAR_FACTOR) * -1;
         } else {
             num_spins = (to_char_code - from_char_code) * CHAR_FACTOR;
         }
+
         var selector = selector_prefix + 'box' + box; // add the box part
         SpinIt(selector, num_spins, rate, LETTER_HEIGHT, final_pos);
     }
@@ -331,7 +331,6 @@ function SpinImage(rate, selector, from_pos, to_pos) {
 }
 
 function SpinIt(selector, num_spins, rate, pixel_distance, final_pos) {
-    console.log(selector, pixel_distance, final_pos);
     var bpX = $(selector).css('backgroundPosition').split(' ')[0];
     var bpY = $(selector).css('backgroundPosition').split(' ')[1];
     var updateBpY = function (yDelta) {
@@ -418,12 +417,10 @@ function updateSolariBoard() {
                 var now = moment();
                 var momentStime = moment(next_due_row.origarrtime, 'x');
                 var timeDelta = now.diff(momentStime);
-                console.log(timeDelta);
                 var nOffset = timeDelta > 0 ? Math.floor(timeDelta / (1000 * 60 * 60 * 24)) : Math.ceil(timeDelta / (1000 * 60 * 60 * 24)); //divide by miliseconds per day and round to zero
                 var sOffset = (nOffset === 0 ? "" : nOffset.toString() + "d"); //if next due is not today, append a "d"
                 if(status_override) {
                     var hrsDelta = momentStime.diff(now, 'hours');
-                    console.log(hrsDelta);
                     nOffset += timeDelta < 0 ? -1 : 0; // if the time difference is negative, which means we are within 24 hours of due, so reduce day offset by 1
                     if (nOffset < 0) {
                         new_board[0].nStatus = 3; // if we've past the due date
@@ -443,7 +440,6 @@ function updateSolariBoard() {
                 var sOffset = (nOffset === 0 ? "" : nOffset.toString() + "d"); //if next due is not today, append a "d"
                 if(status_override) {
                     var hrsDelta = momentAtime.diff(now, 'hours');
-                    console.log(hrsDelta);
                     nOffset += timeDelta < 0 ? -1 : 0; // if the time difference is negative, which means we are within 24 hours of due, so reduce day offset by 1
                     if (nOffset < 0) {
                         new_board[0].nStatus = 3; // if we've past the due date

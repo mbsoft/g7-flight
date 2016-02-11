@@ -1,6 +1,6 @@
 
 var Config = {
-  connectionString : 'postgres://localhost/nouvel_ui',
+  connectionString : 'postgres://homestead:secret@localhost/nouvel_ui',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
   // Flight Stats API production key API values provided by Ludovic
