@@ -22,6 +22,10 @@ var G7Router = function(routeType) {
 };
 
 /* GET home page. */
+router.get('/travelboard', function(req, res, next) {
+  res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'travelboard.html'));
+});
+
 router.get('/viewTravelBoard', function(req, res, next) {
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index.html'));
 });

@@ -57,8 +57,7 @@ moment.locale('fr');
 
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
 var status_override = true;
-var URL = "http://local.g7-flight.com:3000/api/v1/travelboard";
-var URL = "travelboard.json";
+var URL = "/api/v1/travelboard";
 
 //used to add extra params that change over time.  /example_realtime makes use of this
 var URL_SUFFIX = "";

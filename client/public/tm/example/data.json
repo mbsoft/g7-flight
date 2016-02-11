@@ -1,6 +1,0 @@
-[
- {"sDate": "today", "nStatus": 3, "fLight": true, "sDeparture": "CDG AF236 TOULOUSE", "sTime": "19:30", "aTime": "19:35", "nTrack": 17, "nRides": "05"},
- {"sDate": "yesterday", "nStatus": 2, "fLight": false, "sDeparture": "CDG UA312 BOSTON", "sTime": "20:00", "aTime": "20:05", "nTrack": 21, "nRides": "10"},
- {"sDate": "July 8th, 2013", "nStatus": 2, "fLight": false, "sDeparture": "ORY AF32 LONDRES", "sTime": "20:15", "aTime": "20:15", "nTrack": 23, "nRides": "01"},
- {"sDate": "tomorrow", "nStatus": 2, "fLight": true, "sDeparture": "ORY AF1932 MARSEILLES", "sTime": "20:25", "aTime":"20:30", "nTrack": 22, "nRides": "03"}
-]
