@@ -174,9 +174,9 @@ function addSolariBoard(divSelector) {
         var rowIndex = $button.closest('li.board-data').attr('id');
         $('#'+rowIndex+' .traveler-expander').slideToggle("fast", function () {
             if ($(this).is(":visible")) {
-                $button.html('<i class="fa fa-chevron-down"></i>');
+                $button.html('<i class="fa fa-angle-down fa-2x"></i>');
             } else {
-                $button.html('<i class="fa fa-chevron-right"></i>');
+                $button.html('<i class="fa fa-angle-right fa-2x"></i>');
             }
         });
     });
