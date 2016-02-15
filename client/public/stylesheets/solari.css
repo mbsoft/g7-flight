@@ -375,8 +375,14 @@ ul.master-row {
 
 ul.sub-header {
   display: inline-block;
-  width: 1000px;
+  width: 1165px;
   margin-left: 70px
+}
+
+ul.sub-row {
+  display: inline-block;
+  margin-left: 70px;
+  width: 1165px;
 }
 
 li.rider, li.subscription, li.passenger, li.requestor {
@@ -385,17 +391,13 @@ li.rider, li.subscription, li.passenger, li.requestor {
 }
 
 li.rider {
-  width: 50px;
+  width: 200px;
 }
 
 li.subscription {
-  width: 100px;
-}
-
- li.passenger {
   width: 150px;
 }
 
 li.requestor {
-  width: 400px;
+  width: 720px;
 }
