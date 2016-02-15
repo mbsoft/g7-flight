@@ -116,12 +116,12 @@ apirouter.get('/v1/travelboard', function(req, res) {
       return res.status(500).json({ success: false, data: err});
     }
 
-    var query = client.query("SELECT tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+    var query = client.query("SELECT extract(epoch from tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') as checktime,tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
       "tc.currentestimatetravelarrival,tc.initialtravelarrival,extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) as arrtime," +
       "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) as origarrtime," +
       "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
       "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
-      "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
+      "group by travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
  
      query.on('row', function(row) {
 
