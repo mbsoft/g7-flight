@@ -40,8 +40,11 @@ var DEPARTURE_BOXES = 32; // number of letter boxes displayed in the departure c
 var DELAY_BOXES = 2;
 var TIME_BOXES = 4; // number of letter boxes displayed in the time column
 var RIDES_BOXES = 2;
-var ATIME_BOXES = 4;
-var TRACK_BOXES = 2; // number of letter boxes displayed in the track column
+var RIDER_BOXES = 8;
+var SUBSCRIPTION_BOXES = 6;
+var PASSENGER_BOXES = 16;
+var REQUESTOR_BOXES = 16;
+
 var REFRESH_TIME = 60; //refresh time in seconds
 var EMPTY_ROW = {
     "status": "",
@@ -164,9 +167,18 @@ function addSolariBoard(divSelector) {
         return;
     }
 
+    // Toggle showing the Travel Rows
     $('#solariBoardDiv').on('click', 'li.expander a', function(e){
         e.preventDefault();
-        showTravelers($(this).find('tr'));
+        var $button = $(this);
+        var rowIndex = $button.closest('li.board-data').attr('id');
+        $('#'+rowIndex+' .traveler-expander').slideToggle("fast", function () {
+            if ($(this).is(":visible")) {
+                $button.html('<i class="fa fa-chevron-down"></i>');
+            } else {
+                $button.html('<i class="fa fa-chevron-right"></i>');
+            }
+        });
     });
 
     $('li.track').click(function () {
@@ -191,7 +203,7 @@ function addSolariBoard(divSelector) {
             $section = $('#departures .solari-board-rows');
         }
         // add a row
-        $section.append('<li class=board-data id=row' + add_rows + '><ul><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status></li><li class=stime></li><li class=delay></li><li class=atime></li><li class=departure></li><li class="rides"></li></ul></li>');
+        $section.append('<li class=board-data id=row' + add_rows + '><ul class="master-row"><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status></li><li class=stime></li><li class=delay></li><li class=atime></li><li class=departure></li><li class="rides"></li></ul></li>');
 
         // add the letter boxes in the time column
         for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
@@ -291,6 +303,7 @@ function UpdateSolariRow(row, current_row, new_row) {
    // $("#row" + row + " span").addClass(new_row.bLight ? 'circle-on' : 'circle');
 }
 
+// Loop through letter boxes in each row and populate with each charater
 function InsertChars(selector_prefix, max_boxes, current_text, new_text) {
     for (var box = 0; box < max_boxes; box++) {
         var selector = selector_prefix + 'box' + box;
@@ -352,54 +365,8 @@ function updateSolariBoard() {
         if (new_board.length === 0) {
             clearBoard();
         } else {
-            //the next due box should display information on the row for which time info is available, which may not be from the first case
-            var i, stime, atime;
-            for (i=0; i < BOARD_ROWS; i++) {
-                stime = new_board[i].origarrtime;
-                atime = new_board[i].arrtime;
-                if (typeof stime !== "undefined" && stime !== "" ||
-                    typeof atime !== "undefined" && atime !== "")
-                    break;
-            }
-            var next_due_row = new_board[i];
-
-            if (stime) {
-                var now = moment();
-                var momentStime = moment(next_due_row.origarrtime, 'x');
-                var timeDelta = now.diff(momentStime);
-                var nOffset = timeDelta > 0 ? Math.floor(timeDelta / (1000 * 60 * 60 * 24)) : Math.ceil(timeDelta / (1000 * 60 * 60 * 24)); //divide by miliseconds per day and round to zero
-                var sOffset = (nOffset === 0 ? "" : nOffset.toString() + "d"); //if next due is not today, append a "d"
-                if(status_override) {
-                    var hrsDelta = momentStime.diff(now, 'hours');
-                    nOffset += timeDelta < 0 ? -1 : 0; // if the time difference is negative, which means we are within 24 hours of due, so reduce day offset by 1
-                    if (nOffset < 0) {
-                        new_board[0].nStatus = 3; // if we've past the due date
-                    } else if (nOffset === 0 && hrsDelta < 2 && hrsDelta >= 0 ) {
-                        new_board[0].nStatus = 1; //due within 2 hours
-                    } else {
-                        new_board[0].nStatus = 2;
-                    }
-                }
-            }
-
-            if (atime) {
-                var now = moment();
-                var momentAtime = moment(next_due_row.arrtime, 'x');
-                var timeDelta = now.diff(momentAtime);
-                var nOffset = timeDelta > 0 ? Math.floor(timeDelta / (1000 * 60 * 60 * 24)) : Math.ceil(timeDelta / (1000 * 60 * 60 * 24)); //divide by miliseconds per day and round to zero
-                var sOffset = (nOffset === 0 ? "" : nOffset.toString() + "d"); //if next due is not today, append a "d"
-                if(status_override) {
-                    var hrsDelta = momentAtime.diff(now, 'hours');
-                    nOffset += timeDelta < 0 ? -1 : 0; // if the time difference is negative, which means we are within 24 hours of due, so reduce day offset by 1
-                    if (nOffset < 0) {
-                        new_board[0].nStatus = 3; // if we've past the due date
-                    } else if (nOffset === 0 && hrsDelta < 2 && hrsDelta >= 0 ) {
-                        new_board[0].nStatus = 1; //due within 2 hours
-                    } else {
-                        new_board[0].nStatus = 2;
-                    }
-                }
-            }
+            // Setup Sub-Row
+            setupSubRow(new_board);
 
             //now that the nStatus values have been set, update the board
             updateSolariTable(new_board);
@@ -418,6 +385,7 @@ function updateSolariBoard() {
 }
 
 function clearBoard() {
+    clearSubRow();
     //stop all animations
     $(".status").children().stop(true, true);
     $(".stime").children().stop(true, true);
@@ -433,11 +401,17 @@ function clearBoard() {
     }
 }
 
-function showTravelers(row) {
-    // Placeholder for stuff to come
-    console.log(row);
+function setupSubRow(board_data){
+    clearSubRow();
+    $('li.board-data ul').each(function (i){
+        $(this).after('<div class="traveler-expander"><ul class=\"solari-board-columns rounded sub-header\"><li class="rider">Rider</li><li class="subscription">Subscription</li><li class="passenger">Passenger</li><li class="requestor">Requested By</li></ul></div>');
+    });
 }
 
-function padLeft(nr, n, str){
+function clearSubRow() {
+    $('ul.sub-header').remove();
+}
+
+function padLeft(nr, n, str) {
     return Array(n-String(nr).length+1).join(str||'0')+nr;
 }
