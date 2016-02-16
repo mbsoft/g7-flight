@@ -56,7 +56,7 @@ var EMPTY_ROW = {
 
 // Define Moments Locale
 moment.locale('fr');
-var updated_at;
+var updated_at = moment();
 
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
 var status_override = true;
@@ -412,30 +412,32 @@ function populateSubRow(rowIndex, travelerData){
     if (travelerData !== undefined) {
         // Loop through the traveler data, generate rows, populate them
         $.each(travelerData, function (index, value) {
-            var $rowTemplate = '<ul class="sub-row" id="sub-row'+index+'"><li class="rider"></li><li class="subscription"></li><li class="requestor"></li></ul>';
+            var $rowTemplate = '<ul class="sub-row" id="row'+rowIndex+'sub-row'+index+'"><li class="rider"></li><li class="subscription"></li><li class="requestor"></li></ul>';
 
-            $('#row'+rowIndex+' div.traveler-expander ul').after($rowTemplate);
+            $('#row'+rowIndex+' div.traveler-expander ul.sub-header').after($rowTemplate);
 
             // add the letter boxes for riders
             for (var add_cols = 0; add_cols < RIDER_BOXES; add_cols++) {
-                $('#sub-row' + rowIndex + ' li.rider').append('<div id=rider-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
+                $('#row'+rowIndex+'sub-row'+index+' li.rider').append('<div id=rider-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
             }
-            // Fill out the letter boxes for RIDER
-            InsertChars('#rider-row'+rowIndex, RIDER_BOXES, '', value.travelid);
 
             // add the letter boxes for subscription
             for (var add_cols = 0; add_cols < SUBSCRIPTION_BOXES; add_cols++) {
-                $('#sub-row' + rowIndex + ' li.subscription').append('<div id=subscription-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
+                $('#row'+rowIndex+'sub-row'+index+' li.subscription').append('<div id=subscription-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
             }
-            // Fill out the letter boxes for SUBSCRIPTION
-            InsertChars('#subscription-row'+rowIndex, SUBSCRIPTION_BOXES, '', value.subscriptioncode);
 
             // add the letter boxes for passenger
             for (var add_cols = 0; add_cols < REQUESTOR_BOXES; add_cols++) {
-                $('#sub-row' + rowIndex + ' li.requestor').append('<div id=requestor-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
+                $('#row'+rowIndex+'sub-row'+index+' li.requestor').append('<div id=requestor-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
             }
+
+
+            // Fill out the letter boxes for RIDER
+            InsertChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient);
+            // Fill out the letter boxes for SUBSCRIPTION
+            InsertChars('#row'+rowIndex+'sub-row'+index+' #subscription-row'+rowIndex, SUBSCRIPTION_BOXES, '', value.subscriptioncode);
             // Fill out the letter boxes for REQUESTOR
-            InsertChars('#requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby);
+            InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby);
         });
     }
 }
