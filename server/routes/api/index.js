@@ -35,7 +35,7 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
        client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
         [reqBody.ridenumber, reqBody.travelid,
          reqBody.pickupday, reqBody.subscriptioncode,
-         reqBody.requestedby, reqBody.refclient,
+         reqBody.refclient, reqBody.requestedby,
          reqBody.g7pickupzone, reqBody.fromplace,
          reqBody.typeofplace, reqBody.initialdueridetimestamp,
          0, 'CREATED']);
