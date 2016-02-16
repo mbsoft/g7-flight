@@ -127,7 +127,9 @@ apirouter.get('/v1/travelboard', function(req, res) {
 
 
       //row.status = 'ON TIME';
-      if (row.delay.minutes)
+      if (row.delay.hours)
+         row.delay = parseInt(row.delay.minutes) + parseInt(row.delay.hours)*60;
+      else if (row.delay.minutes)
         row.delay = parseInt(row.delay.minutes);
       else {
         row.delay = 0;
