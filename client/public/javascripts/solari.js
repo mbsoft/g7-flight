@@ -47,9 +47,9 @@ var REQUESTOR_BOXES = 30;
 var REFRESH_TIME = 60; //refresh time in seconds
 var EMPTY_ROW = {
     "status": "",
-    "origarrtime": "",
+    "initialtravelarrival": "",
     "delay": "",
-    "arrtime": "",
+    "currentestimatetravelarrival": "",
     "zone": "",
     "nbrtravelers" : ""
 };
@@ -61,6 +61,7 @@ var updated_at = moment();
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
 var status_override = true;
 var URL = "/api/v1/travelboard";
+var URL = "tms/travelboard.json";
 
 //used to add extra params that change over time.  /example_realtime makes use of this
 var URL_SUFFIX = "";
@@ -267,25 +268,15 @@ function updateSolariTable(board){
 
 function UpdateSolariRow(row, current_row, new_row) {
 
-    if (typeof current_row.arrtime == 'number' && current_row.arrtime != "") {
-        current_row.arrtime = moment(current_row.arrtime, 'x').format('HHmm');
-    }
-    if (typeof current_row.arrtime == 'number' && current_row.arrtime != "") {
-        new_row.arrtime = moment(new_row.arrtime, 'x').format('HHmm');
-    }
-    InsertChars('#stime-row' + row, TIME_BOXES, current_row.arrtime, new_row.arrtime);
+    new_row.initialtravelarrival = moment(new_row.initialtravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
+    InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival);
 
     current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 2);
     new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 2);
     InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
 
-    if (typeof current_row.origarrtime == 'number' && current_row.origarrtime != "") {
-        current_row.origarrtime = moment(current_row.origarrtime, 'x').format('HHmm');
-    }
-    if (typeof current_row.origarrtime == 'number' && current_row.origarrtime != "") {
-        new_row.origarrtime = moment(new_row.origarrtime, 'x').format('HHmm');
-    }
-    InsertChars('#atime-row' + row, TIME_BOXES, current_row.origarrtime, new_row.origarrtime);
+    new_row.currentestimatetravelarrival = moment(new_row.currentestimatetravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
+    InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival);
 
     var current_departure = "";
     var new_departure = "";
@@ -343,9 +334,9 @@ function GetFailBoard() {
     for (var row = 0; row < BOARD_ROWS; row++) {
         board[row] = {
             "status": "",
-            "origarrtime": "",
+            "initialtravelarrival": "",
             "delay": 0,
-            "arrtime": "",
+            "currentestimatetravelarrival": "",
             "zone": fail_whale[row],
             "nbrtravelers": 0,
         };

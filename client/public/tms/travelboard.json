@@ -4,11 +4,11 @@
     "travelid": "AF7527",
     "pickupday": "16-01-16",
     "internationalname": "",
-    "currentestimatetravelarrival": "2016-01-16T17:00:00.000Z",
-    "initialtravelarrival": "2016-01-16T17:00:00.000Z",
+    "currentestimatetravelarrival": "2016-01-16T19:25:00.000Z",
+    "initialtravelarrival": "2016-01-16T19:00:00.000Z",
     "arrtime": 1455199727,
     "origarrtime": 1455199727,
-    "delay": 0,
+    "delay": 25,
     "travelers": [
       {
         "ridenumber": 1566903,
