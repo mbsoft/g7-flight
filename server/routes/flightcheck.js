@@ -54,7 +54,7 @@ var flightcheck = {
 
               var req = https.request(options, function(res,options) {
                 res.on('data', function(data){
-
+                  //debugger;
                   var fd = JSON.parse(data);
                   
                   console.log(travelid + ' ' + checkstatus);
@@ -104,8 +104,10 @@ var flightcheck = {
                                 client.query("UPDATE travelchecking SET status='ARRIVED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
                                     [otimes.actualGateArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
                             } else 
-                                client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1) WHERE travelid=($2)",
-                                    [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),travelid ]);
+                                client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
+                                    [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
+                                        Math.floor(Date.now()/1000),
+                                        travelid ]);
                           }
                           else if (checkstatus == 'INITIAL')
                             client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",

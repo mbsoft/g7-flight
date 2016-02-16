@@ -16,12 +16,14 @@ app.controller('mainController', function($scope, $http, $timeout) {
       columnDefs: [
         {name:'Sched Time', field:'origarrtime', width:120},
         {name:'Est   Time', field:'arrtime', width:120},
+        {name:'Next Check', field:'checktime',width:120},
         {name: 'Delay', field: 'delay', width:75, enableCellEdit: false },
         {name:'Flight/Train Nbr', field:'travelid', width:125},
         {name:'From', field:'internationalname', width: 175},
         {name: 'Place', field: 'zone', width: 150},
         {name: 'Status', field: 'status', width:100, enableCellEdit: false },
-        {name: 'Nbr Travelers', field: 'nbrtravelers', width: 150, enableCellEdit: false }
+        {name: 'Nbr Travelers', field: 'nbrtravelers', width: 150, enableCellEdit: false },
+        {name: 'Iterations', field: 'checkiteration', width: 50, enableCellEdit: false}
       ],
 
     }
@@ -37,6 +39,11 @@ app.controller('mainController', function($scope, $http, $timeout) {
             data[i].arrtime = date.format("HH:MM dd/mm");
             date = new Date(data[i].origarrtime*1000);
             data[i].origarrtime = date.format("HH:MM dd/mm");
+            if (data[i].checktime != null) {
+                date = new Date(data[i].checktime*1000);
+                data[i].checktime = date.format("HH:MM dd/mm");
+            } else 
+                data[i].checktime = "N/A";
             data[i].subGridOptions = {
               enableSorting: false,
               enableColumnMenus: false,
@@ -62,6 +69,11 @@ app.controller('mainController', function($scope, $http, $timeout) {
             data[i].arrtime = date.format("HH:MM dd/mm");
             date = new Date(data[i].origarrtime*1000);
             data[i].origarrtime = date.format("HH:MM dd/mm");
+            if (data[i].checktime != null) {
+                date = new Date(data[i].checktime*1000);
+                data[i].checktime = date.format("HH:MM dd/mm");
+            } else
+                data[i].checktime = "N/A";
           data[i].subGridOptions = {
             enableSorting: false,
             enableColumnMenus: false,

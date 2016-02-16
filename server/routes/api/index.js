@@ -35,7 +35,7 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
        client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
         [reqBody.ridenumber, reqBody.travelid,
          reqBody.pickupday, reqBody.subscriptioncode,
-         reqBody.requestedby, reqBody.refclient,
+         reqBody.refclient, reqBody.requestedby,
          reqBody.g7pickupzone, reqBody.fromplace,
          reqBody.typeofplace, reqBody.initialdueridetimestamp,
          0, 'CREATED']);
@@ -116,12 +116,12 @@ apirouter.get('/v1/travelboard', function(req, res) {
       return res.status(500).json({ success: false, data: err});
     }
 
-    var query = client.query("SELECT tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+    var query = client.query("SELECT extract(epoch from tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') as checktime,tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
       "tc.currentestimatetravelarrival,tc.initialtravelarrival,extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) as arrtime," +
       "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) as origarrtime," +
       "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
       "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
-      "group by travelers.g7pickupzone,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
+      "group by travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
  
      query.on('row', function(row) {
 
