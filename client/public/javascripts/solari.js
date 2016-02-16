@@ -61,7 +61,6 @@ var updated_at = moment();
 //if true, the status column will be handled automatically according to time and date. false will override status with nStatus from payload
 var status_override = true;
 var URL = "/api/v1/travelboard";
-var URL = "tms/travelboard.json";
 
 //used to add extra params that change over time.  /example_realtime makes use of this
 var URL_SUFFIX = "";
@@ -268,14 +267,18 @@ function updateSolariTable(board){
 
 function UpdateSolariRow(row, current_row, new_row) {
 
-    new_row.initialtravelarrival = moment(new_row.initialtravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
+    if (new_row.initialtravelarrival !== "") {
+        new_row.initialtravelarrival = moment(new_row.initialtravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
+    }
     InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival);
 
     current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 2);
     new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 2);
     InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
 
-    new_row.currentestimatetravelarrival = moment(new_row.currentestimatetravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
+    if (new_row.currentestimatetravelarrival !== "") {
+        new_row.currentestimatetravelarrival = moment(new_row.currentestimatetravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
+    }
     InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival);
 
     var current_departure = "";
@@ -295,9 +298,20 @@ function UpdateSolariRow(row, current_row, new_row) {
     populateSubRow(row, new_row.travelers);
 
     //clear and apply status class
-    // TODO: Add logic to determine what color
+    var circle = 'circle-green';
+    if (new_row.delay <= 0) {
+        //Green
+        var circle = 'circle-green';
+    } else if (new_row.delay > 0 && new_row.delay < 15) {
+        // Yellow
+        var circle = 'circle-yellow';
+    } else {
+        // Red > 15
+        var circle = 'circle-red';
+    }
+
    $("#row" + row + " ul li.status span").attr('class', 'circle');
-   $("#row" + row + " ul li.status span").addClass(new_row.bLight ? 'circle-on' : 'circle');
+   $("#row" + row + " ul li.status span").addClass(circle);
 }
 
 // Loop through letter boxes in each row and populate with each charater

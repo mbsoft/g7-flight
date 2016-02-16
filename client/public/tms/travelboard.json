@@ -46,11 +46,11 @@
     "travelid": "PS129",
     "pickupday": "16-01-16",
     "internationalname": "",
-    "currentestimatetravelarrival": "2016-01-16T17:00:00.000Z",
+    "currentestimatetravelarrival": "2016-01-16T17:10:00.000Z",
     "initialtravelarrival": "2016-01-16T17:00:00.000Z",
     "arrtime": 1455199727,
     "origarrtime": 1455199727,
-    "delay": 0,
+    "delay": 10,
     "travelers": [
       {
         "ridenumber": 112449,

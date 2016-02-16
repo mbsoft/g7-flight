@@ -308,6 +308,16 @@ li.board-data {
 .circle-on {
   background: #FFE500;
 }
+.circle-red {
+  background: #FF0000;
+}
+.circle-yellow {
+  background: #FFFF00;
+}
+.circle-green {
+  background: #008000;
+}
+
 #last-updated {
   margin: 6px 0 2px 4px;
   height: 25px;
