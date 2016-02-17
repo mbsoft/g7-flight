@@ -73,6 +73,12 @@ var Status = {
     "departed": 4
 };
 
+var Airports = [
+    {"name": "ROISSY AEROPORT", "iata":"CDG"},
+    {"name": "ORLY","iata":"ORY"}
+];
+  
+
 var LAST_STATUS = 4;
 var NextDueStatus = ["", "soon", "null", "overdue", ""];
 var solari_setup_done = 0;
@@ -205,7 +211,7 @@ function addSolariBoard(divSelector) {
             $section = $('#departures .solari-board-rows');
         }
         // add a row
-        $section.append('<li class=board-data id=row' + add_rows + '><ul class="master-row"><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span></span></li><li class=stime></li><li class=delay></li><li class=atime></li><li class=departure></li><li class="rides"></li></ul><div class="traveler-expander"><ul class=\"solari-board-columns rounded sub-header\"><li class="rider">Rider</li><li class="subscription">Subscription</li><li class="requestor">Requested By</li></ul></div></li>');
+        $section.append('<li class=board-data id=row' + add_rows + '><ul class="master-row"><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span></span></li><li class=stime></li><li class=delay></li><li class=atime></li><li class=departure></li><li class="rides"></li></ul><div class="traveler-expander"><ul class=\"solari-board-columns rounded sub-header\"><li class="rider">PASSAGER</li><li class="subscription">ABONNE</li><li class="requestor">DEMANDE PAR</li></ul></div></li>');
 
         // add the letter boxes in the time column
         for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
@@ -281,6 +287,12 @@ function UpdateSolariRow(row, current_row, new_row) {
     }
     InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival);
 
+    // map g7pickupzone to IATA airport code
+    Airports.forEach(function(airport){
+       if (airport.name == new_row.travelers[0].g7pickupzone)
+            new_row.travelers[0].g7pickupzone = airport.iata; 
+    });
+    
     var current_departure = "";
     var new_departure = "";
     if (new_row.travelers) {
