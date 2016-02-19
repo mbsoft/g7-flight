@@ -23,6 +23,73 @@ var G7Router = function(routeType) {
 };
 
 
+// POST - update a traveler record
+apirouter.post('/v1/travelers/update', function(req, res, err1) {
+    
+    var reqBody = req.body;
+    var data = {status: true};
+    
+    pg.connect(config.connectionString, function(err, client, done) {
+        if (err) {
+            console.log(err);
+        } 
+        var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
+        query.on('row', function(row) {
+           // record exists...update it
+           debugger;
+           if (row.travelid == reqBody.travelid) {
+               // no change in travelid so just udpate traveler record
+               var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
+                "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
+                "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
+                "ridestatus=($11) WHERE ridenumber=($12)",
+                [reqBody.travelid,
+                 reqBody.pickupday, reqBody.subscriptioncode,
+                 reqBody.refclient, reqBody.requestedby,
+                 reqBody.g7pickupzone, reqBody.fromplace,
+                 reqBody.typeofplace, reqBody.initialdueridetimestamp,
+                 row.lastdueridetimestamp, row.ridestatus, reqBody.ridenumber]);
+           } else {
+               // changed flights so need to see if there's any need to 
+               // continue doing travel checking on the saved flight
+               var rowquery = client.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
+               rowquery.on('row', function(rowcount) {
+                   if (rowcount.count == 0) {
+                       // not currently travel checking this flight - no change to travelchecking required
+                       // just update traveler record with new content
+                      var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
+                            "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
+                            "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
+                            "ridestatus=($11) WHERE ridenumber=($12)",
+                            [reqBody.travelid,
+                            reqBody.pickupday, reqBody.subscriptioncode,
+                            reqBody.refclient, reqBody.requestedby,
+                            reqBody.g7pickupzone, reqBody.fromplace,
+                            reqBody.typeofplace, reqBody.initialdueridetimestamp,
+                            row.lastdueridetimestamp, row.ridestatus, reqBody.ridenumber]);
+                    } else if (rowcount.count == 1) {
+                        // this was the only traveler for an entry in travelchecking...delete
+                        // ...and then update traveler record
+                        client.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
+                        var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
+                            "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
+                            "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
+                            "ridestatus=($11) WHERE ridenumber=($12)",
+                            [reqBody.travelid,
+                            reqBody.pickupday, reqBody.subscriptioncode,
+                            reqBody.refclient, reqBody.requestedby,
+                            reqBody.g7pickupzone, reqBody.fromplace,
+                            reqBody.typeofplace, reqBody.initialdueridetimestamp,
+                            row.lastdueridetimestamp, row.ridestatus, reqBody.ridenumber]);
+                    }
+               });
+           }
+           pg.end();
+           return res.json(data);   
+        });
+    });  
+});
+
 // POST - add a traveler record
 apirouter.post('/v1/travelers/add', function(req, res, err1) {
     var reqBody = req.body;
@@ -116,26 +183,37 @@ apirouter.get('/v1/travelboard', function(req, res) {
       return res.status(500).json({ success: false, data: err});
     }
 
-    var query = client.query("SELECT extract(epoch from tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') as checktime,tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
-      "tc.currentestimatetravelarrival,tc.initialtravelarrival,extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) as arrtime," +
-      "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) as origarrtime," +
-      "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) as delay," +
-      "json_agg(travelers.*) as travelers, travelers.g7pickupzone as zone from travelchecking tc inner join travelers using (travelid) " +
-      "group by travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.currentestimatetravelarrival,tc.initialtravelarrival,arrtime,delay order by arrtime");
- 
+    if (config.debug)
+        var query = client.query("SELECT extract(epoch FROM tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') AS checktime," + 
+            "tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+            "tc.currentestimatetravelarrival,tc.initialtravelarrival," + 
+            "extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS arrtime," +
+            "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
+            "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
+            "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid) " +
+            "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
+     else
+        var query = client.query("SELECT extract(epoch FROM tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') AS checktime," + 
+            "tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+            "tc.currentestimatetravelarrival,tc.initialtravelarrival," + 
+            "extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS arrtime," +
+            "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
+            "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
+            "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid) " +
+            "WHERE tc.status != 'ARRIVED' " +
+            "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
+                
      query.on('row', function(row) {
 
-
-      //row.status = 'ON TIME';
-      if (row.delay.hours)
-         row.delay = parseInt(row.delay.minutes) + parseInt(row.delay.hours)*60;
-      else if (row.delay.minutes)
-        row.delay = parseInt(row.delay.minutes);
-      else {
-        row.delay = 0;
-      }
-      row.nbrtravelers = row.travelers.length;
-      results.push(row);
+        if (row.delay.hours)
+            row.delay = parseInt(row.delay.minutes) + parseInt(row.delay.hours)*60;
+        else if (row.delay.minutes)
+            row.delay = parseInt(row.delay.minutes);
+        else {
+            row.delay = 0;
+        }
+        row.nbrtravelers = row.travelers.length;
+        results.push(row);
     });
     query.on('end', function() {
       done();

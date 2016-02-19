@@ -27,6 +27,7 @@ var flightcheck = {
         console.log(err);
       }
       var query = client.query("SELECT * FROM travelchecking WHERE status != 'TRAVELID_ERROR' AND status != 'ARRIVED';");
+      //var query = client.query("SELECT * FROM travelchecking WHERE status != 'ARRIVED';");
       query.on('row', function(row) {
         results.push(row);
       });
@@ -44,19 +45,18 @@ var flightcheck = {
             // INITIAL - record just added to the table. No query to the API yet
             // CHECKED - first check of arrival tiem retrieved. Won't be checked again until within configurable time of arrival
             // ACTIVE - flight that is being actively checked for status
-            if ((checkstatus == 'INITIAL') || (checkstatus == 'ACTIVE') ||
+            if ((checkstatus == 'INITIAL') || (checkstatus == 'ACTIVE') || (checkstatus == 'TRAVELID_ERROR') ||
                 (checkstatus == 'CHECKED' && (time2arrival < config.firstCheckTime)))
             {
               options.path = config.flightstatsPath + f.travelid.substring(0,2) +'/'
                 + f.travelid.substring(2,f.travelid.length)
                 + '/arr/20' + f.pickupday.substring(6,8) + '/' + f.pickupday.substring(3,5) + '/' + f.pickupday.substring(0,2)
-                +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false&airport=' + f.internationalcode;
+                +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false';
 
               var req = https.request(options, function(res,options) {
                 res.on('data', function(data){
-                  //debugger;
                   var fd = JSON.parse(data);
-                  
+                  //debugger;
                   console.log(travelid + ' ' + checkstatus);
                   if (fd.error == null) {
                     if (fd.flightStatuses.length == 0) {
@@ -71,7 +71,17 @@ var flightcheck = {
                     }
                     
                     var fs = fd.flightStatuses[0];
-                    if (fs != null) {
+                    if (fs == null || (fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG')) {
+                       pg.connect(config.connectionString, function(err, client, done) {
+                        if (err) {
+                            done();
+                            console.log(err);
+                            }
+
+                        client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+                        done();
+                      });                        
+                    } else if (fs != null) {
 
                         // query PG and update
                       pg.connect(config.connectionString, function(err, client, done) {
@@ -147,11 +157,11 @@ var flightcheck = {
               req.on('error', function(err){
                 //console.log("Error: ", err);
               });
-              //console.log(f.travelid);
+
           }
           });
         }
-        //console.log(results);
+
       });
     });
   }
