@@ -26,9 +26,9 @@
  */
 
 // some constants and enums
-var RATE_VARIANCE = 8; // for determining random animation rate in milliseconds
-var RATE_BASE = 8; // for determining random animation rate in milliseconds
-var BOARD_ROWS = 16; // total number of rows displayed on the solari board
+var RATE_VARIANCE = 4; // for determining random animation rate in milliseconds
+var RATE_BASE = 4; // for determining random animation rate in milliseconds
+var BOARD_ROWS = 24; // total number of rows displayed on the solari board
 var SECOND_SECTION_START = 8; // the first row that contains a next due case
 var LETTER_HEIGHT = 26; // height of a single letter frame (in pixels) in the letter image
 var FIRST_CHAR_CODE = 32; // the first ASCII character that is represented in the letter image
@@ -36,15 +36,15 @@ var LAST_CHAR_CODE = 96; // the last ASCII character that is represented in the 
 var CHAR_FACTOR = 2; // every N character in the letter image is a "real" character
 var IMAGE_HEIGHT = 20; // height of a single product or status image frame (in pixels)
 var IMAGE_FACTOR = 2; // every N picture in the letter image is a "real" image (i.e., not an in-between frame)
-var DEPARTURE_BOXES = 32; // number of letter boxes displayed in the departure column
-var DELAY_BOXES = 2;
+var DEPARTURE_BOXES = 31; // number of letter boxes displayed in the departure column
+var DELAY_BOXES = 3;
 var TIME_BOXES = 4; // number of letter boxes displayed in the time column
 var RIDES_BOXES = 2;
 var RIDER_BOXES = 8;
 var SUBSCRIPTION_BOXES = 6;
 var REQUESTOR_BOXES = 30;
 
-var REFRESH_TIME = 60; //refresh time in seconds
+var REFRESH_TIME = 20; //refresh time in seconds
 var EMPTY_ROW = {
     "status": "",
     "initialtravelarrival": "",
@@ -68,14 +68,16 @@ var URL_SUFFIX = "";
 var Status = {
     "none": 0,
     "all_aboard": 1,
-    "on_time": 2,
-    "delayed": 3,
-    "departed": 4
+    "error": "TRAVELID_ERROR",
+    "active": "ACTIVE",
+    "arrived": "ARRIVED",
+    "checked": "CHECKED"
 };
 
 var Airports = [
     {"name": "ROISSY AEROPORT", "iata":"CDG"},
-    {"name": "ORLY","iata":"ORY"}
+    {"name": "ORLY","iata":"ORY"},
+    {"name": "ORLY VILLE","iata":"ORY"}
 ];
   
 
@@ -269,42 +271,72 @@ function updateSolariTable(board){
 
     // update the current_row board
     current_board = board;
+    
+    // Update 'next due'
+    var next_due = 0;
+    for (var row = 0; row < BOARD_ROWS; row++) {
+        if ((board[row] != undefined) && board[row].status != Status.error && board[row].status != Status.arrived) {
+            if (next_due == 0)
+                next_due = board[row].origarrtime;
+            else if (board[row].arrtime < next_due)
+                next_due = board[row].origarrtime;
+        }
+    }
+     if (next_due != undefined)
+        NextDue("#next-due", moment(next_due, 'X').format('HH \\H\\ mm','fr'), '', '');
+
 }
 
 function UpdateSolariRow(row, current_row, new_row) {
 
+    var rate = RATE_BASE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE + Math.random() * RATE_VARIANCE;
+    
     if (new_row.initialtravelarrival !== "") {
         new_row.initialtravelarrival = moment(new_row.initialtravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
     }
-    InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival);
+    InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival, new_row.status);
 
-    current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 2);
-    new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 2);
-    InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay);
+    current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 3);
+    new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 3);
+    InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay, false);
 
     if (new_row.currentestimatetravelarrival !== "") {
         new_row.currentestimatetravelarrival = moment(new_row.currentestimatetravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
     }
-    InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival);
+    if (new_row.status == 'ARRIVED')
+         InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival, new_row.status);
+    else
+        InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival, new_row.status);
 
     // map g7pickupzone to IATA airport code
-    Airports.forEach(function(airport){
-       if (airport.name == new_row.travelers[0].g7pickupzone)
-            new_row.travelers[0].g7pickupzone = airport.iata; 
-    });
+    if (new_row.travelers != null) {
+        Airports.forEach(function(airport){
+        if (airport.name == new_row.travelers[0].g7pickupzone)
+                new_row.travelers[0].g7pickupzone = airport.iata; 
+        });
+    }
     
     var current_departure = "";
     var new_departure = "";
     if (new_row.travelers) {
-        var new_departure = new_row.travelers[0].g7pickupzone +' '+new_row.travelers[0].travelid +' '+new_row.internationalname;
+        new_departure = new_row.travelers[0].g7pickupzone +' '+new_row.travelers[0].travelid +' '+new_row.internationalname;
+        if (current_row.travelers != undefined)
+            current_departure = current_row.travelers[0].g7pickupzone + ' ' + current_row.travelers[0].travelid + ' ' + current_row.internationalname;
     } else {
-        new_departure = new_row.zone;
+        new_row = EMPTY_ROW;
+        new_departure = "";
+        if (current_row.travelers != undefined)
+            current_departure = current_row.travelers[0].g7pickupzone + ' ' + current_row.travelers[0].travelid + ' ' + current_row.internationalname;
     }
-    InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure);
+    
+    if (new_row.status != Status.arrived && new_row.status != Status.error)
+        SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row.status);
+    else
+        InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row.status);
 
     current_row.nbrtravelers = current_row.nbrtravelers === "" ? "" : padLeft(current_row.nbrtravelers, 2);
     new_row.nbrtravelers = new_row.nbrtravelers === "" ? "" : padLeft(new_row.nbrtravelers, 2);
-    InsertChars('#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers);
+    InsertChars('#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers, new_row.status);
 
     // Populate all the subrows
     populateSubRow(row, new_row.travelers);
@@ -327,7 +359,7 @@ function UpdateSolariRow(row, current_row, new_row) {
 }
 
 // Loop through letter boxes in each row and populate with each charater
-function InsertChars(selector_prefix, max_boxes, current_text, new_text) {
+function InsertChars(selector_prefix, max_boxes, current_text, new_text, status) {
     for (var box = 0; box < max_boxes; box++) {
         var selector = selector_prefix + 'box' + box;
 
@@ -336,12 +368,67 @@ function InsertChars(selector_prefix, max_boxes, current_text, new_text) {
                 var character = "0";
             } else {
                 var character = new_text.toString().charAt(box);
-            }
-            $(selector).html('<span class="board-text">'+character+'</span>');
+            }            
+            if (status == Status.arrived)
+                $(selector).html('<span class="board-arrived-text">'+character+'</span>');
+            else if (status == Status.error)
+                $(selector).html('<span class="board-error-text">'+character+'</span>');
+            else
+                $(selector).html('<span class="board-text">'+character+'</span>');             
         } else {
             $(selector).html('<span class="board-text"></span>');
         }
     }
+}
+
+// Loop through letter boxes in each row and populate with each charater
+function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text, status) {
+    var num_spins = 0;
+    for (var box = 0; box < max_boxes; box++) {
+        // get the to and from character codes for this box
+        var to_char_code = ToUpper(((new_text.toString().length > box) ? new_text.toString().charCodeAt(box) : 32));
+        var from_char_code = ToUpper(((current_text.toString().length > box) ? current_text.toString().charCodeAt(box) : 32));
+        var final_pos = '';
+        if (from_char_code > to_char_code) {
+            // (96 - 56) + (52 - 32) * 2 = 120
+            num_spins = ((LAST_CHAR_CODE - from_char_code) + (to_char_code - FIRST_CHAR_CODE)) * CHAR_FACTOR;
+            // ((26 * (52 - 32)) * 2) * -1
+            final_pos = ((LETTER_HEIGHT * (to_char_code - FIRST_CHAR_CODE)) * CHAR_FACTOR) * -1;
+        } else {
+            num_spins = (to_char_code - from_char_code) * CHAR_FACTOR;
+        }
+ 
+        var selector = selector_prefix + 'box' + box; // add the box part
+        SpinIt(selector, num_spins, rate, LETTER_HEIGHT, final_pos, status);
+    }
+}
+
+function SpinIt(selector, num_spins, rate, pixel_distance, final_pos, status) {
+    var bpX = $(selector).css('backgroundPosition').split(' ')[0];
+    var bpY = $(selector).css('backgroundPosition').split(' ')[1];
+    var updateBpY = function (yDelta) {
+        bpY = (parseFloat(bpY) + yDelta) + 'px';
+        return bpX + ' ' + bpY;
+    };
+
+    for (var ii = 0; ii < num_spins; ii++) {
+        $(selector).transition(
+            {backgroundPosition: updateBpY(-(pixel_distance * 2))},
+            {duration: 1, easing: "linear"}
+        );
+        $(selector).transition(
+            {backgroundPosition: updateBpY(1)},
+            {duration: rate, easing: "linear"}
+        );
+        // on the very last iteration, use a call back to set the background position to the "real" position
+        var f = function () {};
+        if ((final_pos !== '') && (ii === (num_spins-1))) {
+            f = function() {
+                $(selector).css('backgroundPosition', bpX + ' ' + final_pos);
+            };
+        }
+        $(selector).transition({backgroundPosition: updateBpY((pixel_distance - 1))}, 1, f);
+     }
 }
 
 function GetFailBoard() {
@@ -450,11 +537,11 @@ function populateSubRow(rowIndex, travelerData){
 
 
             // Fill out the letter boxes for RIDER
-            InsertChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient);
+            InsertChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient, false);
             // Fill out the letter boxes for SUBSCRIPTION
-            InsertChars('#row'+rowIndex+'sub-row'+index+' #subscription-row'+rowIndex, SUBSCRIPTION_BOXES, '', value.subscriptioncode);
+            InsertChars('#row'+rowIndex+'sub-row'+index+' #subscription-row'+rowIndex, SUBSCRIPTION_BOXES, '', value.subscriptioncode, false);
             // Fill out the letter boxes for REQUESTOR
-            InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby);
+            InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby, false);
         });
     }
 }
@@ -474,5 +561,8 @@ function clearSubRows() {
 // Ex: padLeft(5, 2, 0)
 // Gives: 05
 function padLeft(nr, n, str) {
-    return Array(n-String(nr).length+1).join(str||'0')+nr;
+    if (nr < 0) //pad negative values with 'space'
+        return Array(n-String(nr).length+1).join(str||' ')+nr;
+    else
+        return Array(n-String(nr).length+1).join(str||'0')+nr;
 }
