@@ -27,7 +27,6 @@ var G7Router = function(routeType) {
 apirouter.post('/v1/travelers/update', function(req, res, err1) {
     
     var reqBody = req.body;
-    var data = {status: true};
     
     pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
@@ -36,7 +35,6 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
         var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
         query.on('row', function(row) {
            // record exists...update it
-           debugger;
            if (row.travelid == reqBody.travelid) {
                // no change in travelid so just udpate traveler record
                var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
@@ -85,7 +83,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                });
            }
            pg.end();
-           return res.json(data);   
+           return res.json();   
         });
     });  
 });
@@ -93,7 +91,6 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
 // POST - add a traveler record
 apirouter.post('/v1/travelers/add', function(req, res, err1) {
     var reqBody = req.body;
-    var data = {status: true};
 
     pg.connect(config.connectionString, function(err, client, done) {
        if (err) {
@@ -109,7 +106,7 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
     });
     
     pg.end();
-    return res.json(data);
+    return res.json();
 });
 
 
@@ -117,7 +114,6 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
 // DELETE traveler reference - triggered by cancellation of the
 // order in the TaxiPak dispatching system
 apirouter.post('/v1/travelers/delete', function(req, res, err1) {
-    var data = {status: true};
     var reqBody = req.body;
     
     var client = new pg.Client(config.connectionString);
@@ -147,7 +143,7 @@ apirouter.post('/v1/travelers/delete', function(req, res, err1) {
               
     });
     pg.end();
-    return res.json(data);
+    return res.json();
 });
 
 

@@ -19,6 +19,9 @@ var Config = {
   logDirectory: './logs',
   logLevel: 'debug',
   
+  // Listen port
+  port: '3000',
+  
   //Development
   debug: true
 }

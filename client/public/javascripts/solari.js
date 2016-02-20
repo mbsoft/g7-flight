@@ -40,7 +40,9 @@ var DEPARTURE_BOXES = 31; // number of letter boxes displayed in the departure c
 var DELAY_BOXES = 3;
 var TIME_BOXES = 4; // number of letter boxes displayed in the time column
 var RIDES_BOXES = 2;
-var RIDER_BOXES = 8;
+var RIDER_BOXES = 20;
+var ORDERNBR_BOXES = 9;
+var INDEX_BOXES = 2;
 var SUBSCRIPTION_BOXES = 6;
 var REQUESTOR_BOXES = 30;
 
@@ -115,13 +117,12 @@ function addSolariBoard(divSelector) {
             "<div id=\"solari\" class=\"panel\">" +
             "<div id=\"departures\">" +
             "<header class=\"solari-board-header rounded\"> " +
-            "<div class=\"solari-board-icon\">Travel Monitor</div>" +
             "<div class=\"clockContainer\">" +
+            "<div class=\"solari-board-icon\"><img src=../images/taxis_g7.png /></div>" +
             "<ul class=\"clockList\">" +
             "<li id=\"hours\"></li>" +
-            "<li id=\"point\">:</li>" +
+            "<li id=\"point\">H</li>" +
             "<li id=\"min\"></li>" +
-            "<li id=\"ampm\"> pm</li>" +
             "</ul>" +
             "</div>" +
             "<div id=\"next-due\">" +
@@ -159,9 +160,6 @@ function addSolariBoard(divSelector) {
         // Add a leading zero to the minutes value and am/pm
         var minutes = moment().format('mm');
         $("#min").html(minutes);
-
-        // Set am/pm
-        $("#ampm").html(moment().format('a'));
 
         $('#last-updated-human').text(updated_at.fromNow());
     }, 1000); // every 1 seconds is plenty accurate
@@ -213,8 +211,15 @@ function addSolariBoard(divSelector) {
             $section = $('#departures .solari-board-rows');
         }
         // add a row
-        $section.append('<li class=board-data id=row' + add_rows + '><ul class="master-row"><li class=expander><a href="#" id=expander' + add_rows + '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span></span></li><li class=stime></li><li class=delay></li><li class=atime></li><li class=departure></li><li class="rides"></li></ul><div class="traveler-expander"><ul class=\"solari-board-columns rounded sub-header\"><li class="rider">PASSAGER</li><li class="subscription">ABONNE</li><li class="requestor">DEMANDE PAR</li></ul></div></li>');
-
+        $section.append('<li class=board-data id=row' + add_rows + 
+        '><ul class="master-row"><li class=expander><a href="#" id=expander' + add_rows + 
+        '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span>' + 
+        '</span></li><li class=stime></li><li class=delay></li><li class=atime></li>' + 
+        '<li class=departure></li><li class="rides"></li></ul>' + 
+        '<div class="traveler-expander"><ul class=\"solari-board-sub-columns rounded sub-header\">' + 
+        '<li class="index">IDX</li><li class="order">ORDER</li><li class="subscription">ABONNE</li>' + 
+        '<li class="rider">PASSAGER</li><li class="inittime">INIT TIME</li><li class="nexttime">NEXT TIME</li></ul></div></li>');
+        
         // add the letter boxes in the time column
         for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
             $('#row' + add_rows + ' li.stime').append('<div id=stime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
@@ -339,7 +344,7 @@ function UpdateSolariRow(row, current_row, new_row) {
     InsertChars('#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers, new_row.status);
 
     // Populate all the subrows
-    populateSubRow(row, new_row.travelers);
+    populateSubRow(row, new_row);
 
     //clear and apply status class
     var circle = 'circle-green';
@@ -377,6 +382,24 @@ function InsertChars(selector_prefix, max_boxes, current_text, new_text, status)
                 $(selector).html('<span class="board-text">'+character+'</span>');             
         } else {
             $(selector).html('<span class="board-text"></span>');
+        }
+    }
+}
+
+function InsertSubChars(selector_prefix, max_boxes, current_text, new_text, status) {
+    for (var box = 0; box < max_boxes; box++) {
+        var selector = selector_prefix + 'box' + box;
+
+        if (new_text !== undefined) {
+            if (new_text === 0) {
+                var character = "0";
+            } else {
+                var character = new_text.toString().charAt(box);
+            }            
+
+            $(selector).html('<span class="board-sub-text">'+character+'</span>');             
+        } else {
+            $(selector).html('<span class="board-sub-text"></span>');
         }
     }
 }
@@ -509,39 +532,72 @@ function clearBoard() {
     }
 }
 
-function populateSubRow(rowIndex, travelerData){
+function populateSubRow(rowIndex, mainRow){
     // Remove the previous sub-rows since this function recreates them from the travelerData
     clearSubRow(rowIndex);
-
+    travelerData = mainRow.travelers; 
     if (travelerData !== undefined) {
+        var count = travelerData.length;
         // Loop through the traveler data, generate rows, populate them
         $.each(travelerData, function (index, value) {
-            var $rowTemplate = '<ul class="sub-row" id="row'+rowIndex+'sub-row'+index+'"><li class="rider"></li><li class="subscription"></li><li class="requestor"></li></ul>';
+            var $rowTemplate = '<ul class="sub-row" id="row'+rowIndex+'sub-row'+index+'"><li class="index"></li><li class="order"></li><li class="subscription"></li><li class="rider"></li><li class="inittime"></li><li class="nexttime"></li></ul>';
 
             $('#row'+rowIndex+' div.traveler-expander ul.sub-header').after($rowTemplate);
 
-            // add the letter boxes for riders
-            for (var add_cols = 0; add_cols < RIDER_BOXES; add_cols++) {
-                $('#row'+rowIndex+'sub-row'+index+' li.rider').append('<div id=rider-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
-            }
 
+            // add the letter boxes for index
+            for (var add_cols = 0; add_cols < INDEX_BOXES; add_cols++) {
+                $('#row'+rowIndex+'sub-row'+index+' li.index').append('<div id=index-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
+            } 
+
+            // add the letter boxes for the TaxiPak order number - last 6 digits (used for searches)
+            for (var add_cols = 0; add_cols < ORDERNBR_BOXES; add_cols++) {
+                $('#row'+rowIndex+'sub-row'+index+' li.order').append('<div id=order-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
+            }
+                        
             // add the letter boxes for subscription
             for (var add_cols = 0; add_cols < SUBSCRIPTION_BOXES; add_cols++) {
-                $('#row'+rowIndex+'sub-row'+index+' li.subscription').append('<div id=subscription-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
+                $('#row'+rowIndex+'sub-row'+index+' li.subscription').append('<div id=subscription-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
             }
+            
+            // add the letter boxes for riders    
+            for (var add_cols = 0; add_cols < RIDER_BOXES; add_cols++) {
+                $('#row'+rowIndex+'sub-row'+index+' li.rider').append('<div id=rider-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
+            }
+            
 
+            for (var add_cols = 0; add_cols < TIME_BOXES; add_cols++) {
+                $('#row'+rowIndex+'sub-row'+index+' li.inittime').append('<div id=inittime-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
+                if (add_cols == 1) {
+                    $('#row'+rowIndex+'sub-row'+index+' li.inittime').append('<div class=dot>H</div>');
+                }
+            }
+            
+            for (var add_cols = 0; add_cols < TIME_BOXES; add_cols++) {
+                $('#row'+rowIndex+'sub-row'+index+' li.nexttime').append('<div id=nexttime-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
+                if (add_cols == 1) {
+                    $('#row'+rowIndex+'sub-row'+index+' li.nexttime').append('<div class=dot>H</div>');
+                }
+            }
             // add the letter boxes for passenger
-            for (var add_cols = 0; add_cols < REQUESTOR_BOXES; add_cols++) {
-                $('#row'+rowIndex+'sub-row'+index+' li.requestor').append('<div id=requestor-row' + rowIndex + 'box' + add_cols + ' class=letterbox></div>');
-            }
+            //for (var add_cols = 0; add_cols < REQUESTOR_BOXES; add_cols++) {
+            //    $('#row'+rowIndex+'sub-row'+index+' li.requestor').append('<div id=requestor-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
+            //}
 
-
-            // Fill out the letter boxes for RIDER
-            InsertChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient, false);
+	        InsertSubChars('#row'+rowIndex+'sub-row'+index+' #index-row'+rowIndex, INDEX_BOXES, '', padLeft(count--, 2), false);
+            
+            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #order-row'+rowIndex, ORDERNBR_BOXES, '', value.ridenumber, false);
             // Fill out the letter boxes for SUBSCRIPTION
-            InsertChars('#row'+rowIndex+'sub-row'+index+' #subscription-row'+rowIndex, SUBSCRIPTION_BOXES, '', value.subscriptioncode, false);
+            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #subscription-row'+rowIndex, SUBSCRIPTION_BOXES, '', value.subscriptioncode, false);
+            // Fill out the letter boxes for RIDER
+            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient, false);
+
+            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);
+            
+            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp+(mainRow.delay*60), 'X').format('HHmm','fr'), false);
+ 
             // Fill out the letter boxes for REQUESTOR
-            InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby, false);
+            //InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby, false);
         });
     }
 }

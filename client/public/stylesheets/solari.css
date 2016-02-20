@@ -134,6 +134,14 @@ ul.solari-board-columns {
   height: 21px;
   padding: 5px 1px 11px 17px;
 }
+
+ul.solari-board-sub-columns {
+  font-size: 8px;
+  font-family: Lato, Arial, sans-serif;
+  height: 12px;
+  padding: 5px 1px 11px 17px;
+}
+
 ul.solari-board-rows {
   padding: 2px 0 0;
 }
@@ -197,6 +205,18 @@ li.alert {
   border-left: 1px solid #404040;
   border-bottom: 1px solid #404040;
 }
+
+.subletterbox {
+  float: left;
+  margin-right: 3px;
+  height: 18px;
+  width: 16px;
+  background: url(../images/letters-final.png) #000000 -3px 0;
+  overflow: hidden;
+  border-left: 1px solid #404040;
+  border-bottom: 1px solid #404040;   
+}
+
 .iconbox {
   height: 20px;
   width: 80px;
@@ -220,7 +240,7 @@ li.alert {
 .dot {
   float: left;
   font-size: 80%;
-  margin-top: 3px;
+  margin-top: 0px;
   margin-right: 1px;
   margin-left: 0;
   font-weight: bold;
@@ -241,8 +261,9 @@ li.board-data {
 .solari-board-icon {
   width: 33%;
   height: 50px;
-  margin-top: 3px;
-  margin-right: 13px;
+  margin-top: 35px;
+  margin-right: 0px;
+  margin-left: 450px;
   float: left;
 }
 #departures .solari-board-icon {
@@ -356,13 +377,14 @@ div#ticker {
 /* CSS for the clock */
 .clockContainer {
 	 font: bold 12px Arial, Helvetica, sans-serif;
-	 width: 30%;
+	 width: 10%;
 	 float: left;
-	 text-align: center;
+     margin-top: -60px;
+	 text-align: left;
 }
 
 .clockList { margin:0 auto; padding:0px; list-style:none; text-align:center; }
-.clockList li { display:inline; font-size:4em; text-align:center; font-family:'BebasNeueRegular', Arial, Helvetica, sans-serif; }
+.clockList li { display:inline; font-size:2em; text-align:center; font-family:'BebasNeueRegular', Arial, Helvetica, sans-serif; }
 
 #point { position:relative; padding-left:2px; padding-right:2px; }
 #ampm { font-size:2em; margin-left:2px; }
@@ -372,6 +394,13 @@ span.board-text {
   width: 21px;
   text-align: center;
   font-size: 20px;
+}
+
+span.board-sub-text {
+  display:block;
+  width: 14px;
+  text-align: center;
+  font-size: 13px;
 }
 
 span.board-arrived-text {
@@ -404,7 +433,7 @@ ul.master-row {
 ul.sub-header {
   display: inline-block;
   width: 1165px;
-  margin-left: 70px
+  margin-left: 45px
 }
 
 ul.sub-row {
@@ -413,19 +442,36 @@ ul.sub-row {
   width: 1165px;
 }
 
-li.rider, li.subscription, li.passenger, li.requestor {
+li.index, li.order, li.rider, li.subscription, li.passenger, li.inittime, li.nexttime {
   float: left;
   margin: 2px 14px 2px 0;
+  display:block;
+  width: 16px;
+  text-align: center;
+  font-size: 16px;
+}
+
+li.index {
+  width: 40px;
 }
 
 li.rider {
-  width: 200px;
+  width: 425px;
+}
+
+li.order {
+   width: 185px;
 }
 
 li.subscription {
-  width: 150px;
+  width: 120px;
 }
 
-li.requestor {
-  width: 720px;
+li.inittime {
+  width: 125px;
 }
+
+li.nexttime {
+  width: 125px;
+}
+

@@ -25,7 +25,6 @@ var G7Router = function(routeType) {
 
 // Testing endpoints to create and clear data from tables
 testrouter.get('/clear', function(req, res, err1) {
-  debugger;
   var data = {status: true};
   pg.connect(config.connectionString, function(err, client, done) {
     if (err) {
