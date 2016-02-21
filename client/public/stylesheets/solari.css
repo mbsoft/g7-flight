@@ -206,6 +206,17 @@ li.alert {
   border-bottom: 1px solid #404040;
 }
 
+.letterbox-red {
+  float: left;
+  margin-right: 3px;
+  height: 26px;
+  width: 20px;
+  background: url(../images/letters-red-final.png) #000000 -3px 0;
+  overflow: hidden;
+  border-left: 1px solid #404040;
+  border-bottom: 1px solid #404040;  
+}
+
 .subletterbox {
   float: left;
   margin-right: 3px;
@@ -394,6 +405,29 @@ span.board-text {
   width: 21px;
   text-align: center;
   font-size: 20px;
+}
+
+span.board-green-text {
+  display:block;
+  width: 21px;
+  text-align: center;
+  font-size: 20px;
+}
+
+span.board-yellow-text {
+  display:block;
+  width: 21px;
+  text-align: center;
+  font-size: 20px;
+}
+
+span.board-red-text {
+  display:block;
+  width: 21px;
+  text-align: center;
+  font-size: 20px;
+  color: #FF0000;
+  font-weight: bold;
 }
 
 span.board-sub-text {

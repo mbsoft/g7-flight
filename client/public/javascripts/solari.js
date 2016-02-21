@@ -45,7 +45,7 @@ var ORDERNBR_BOXES = 9;
 var INDEX_BOXES = 2;
 var SUBSCRIPTION_BOXES = 6;
 var REQUESTOR_BOXES = 30;
-
+var DELAY_RED = 15;
 var REFRESH_TIME = 20; //refresh time in seconds
 var EMPTY_ROW = {
     "status": "",
@@ -299,19 +299,19 @@ function UpdateSolariRow(row, current_row, new_row) {
     if (new_row.initialtravelarrival !== "") {
         new_row.initialtravelarrival = moment(new_row.initialtravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
     }
-    InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival, new_row.status);
+    InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival, new_row);
 
     current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 3);
     new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 3);
-    InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay, false);
+    InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay, new_row);
 
     if (new_row.currentestimatetravelarrival !== "") {
         new_row.currentestimatetravelarrival = moment(new_row.currentestimatetravelarrival, 'YYYY-MM-DDTHH:mm:ss.SSSZ').format('HHmm');
     }
     if (new_row.status == 'ARRIVED')
-         InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival, new_row.status);
+         InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival, new_row);
     else
-        InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival, new_row.status);
+        InsertChars('#atime-row' + row, TIME_BOXES, current_row.currentestimatetravelarrival, new_row.currentestimatetravelarrival, new_row);
 
     // map g7pickupzone to IATA airport code
     if (new_row.travelers != null) {
@@ -335,13 +335,13 @@ function UpdateSolariRow(row, current_row, new_row) {
     }
     
     if (new_row.status != Status.arrived && new_row.status != Status.error)
-        SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row.status);
+        SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row.delay);
     else
-        InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row.status);
+        InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row);
 
     current_row.nbrtravelers = current_row.nbrtravelers === "" ? "" : padLeft(current_row.nbrtravelers, 2);
     new_row.nbrtravelers = new_row.nbrtravelers === "" ? "" : padLeft(new_row.nbrtravelers, 2);
-    InsertChars('#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers, new_row.status);
+    InsertChars('#rides-row' + row, DELAY_BOXES, current_row.nbrtravelers, new_row.nbrtravelers, new_row);
 
     // Populate all the subrows
     populateSubRow(row, new_row);
@@ -351,7 +351,7 @@ function UpdateSolariRow(row, current_row, new_row) {
     if (new_row.delay <= 0) {
         //Green
         var circle = 'circle-green';
-    } else if (new_row.delay > 0 && new_row.delay < 15) {
+    } else if (new_row.delay > 0 && new_row.delay < DELAY_RED) {
         // Yellow
         var circle = 'circle-yellow';
     } else {
@@ -364,7 +364,7 @@ function UpdateSolariRow(row, current_row, new_row) {
 }
 
 // Loop through letter boxes in each row and populate with each charater
-function InsertChars(selector_prefix, max_boxes, current_text, new_text, status) {
+function InsertChars(selector_prefix, max_boxes, current_text, new_text, new_row) {
     for (var box = 0; box < max_boxes; box++) {
         var selector = selector_prefix + 'box' + box;
 
@@ -374,12 +374,16 @@ function InsertChars(selector_prefix, max_boxes, current_text, new_text, status)
             } else {
                 var character = new_text.toString().charAt(box);
             }            
-            if (status == Status.arrived)
+            if (new_row.status == Status.arrived)
                 $(selector).html('<span class="board-arrived-text">'+character+'</span>');
-            else if (status == Status.error)
+            else if (new_row.status == Status.error)
                 $(selector).html('<span class="board-error-text">'+character+'</span>');
+            else if (new_row.delay <= 0)
+                $(selector).html('<span class="board-green-text">'+character+'</span>');
+            else if (new_row.delay > 0 && new_row.delay < DELAY_RED)
+                $(selector).html('<span class="board-yellow-text">'+character+'</span>');
             else
-                $(selector).html('<span class="board-text">'+character+'</span>');             
+                $(selector).html('<span class="board-red-text">'+character+'</span>'); 
         } else {
             $(selector).html('<span class="board-text"></span>');
         }
@@ -405,7 +409,7 @@ function InsertSubChars(selector_prefix, max_boxes, current_text, new_text, stat
 }
 
 // Loop through letter boxes in each row and populate with each charater
-function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text, status) {
+function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text, delay) {
     var num_spins = 0;
     for (var box = 0; box < max_boxes; box++) {
         // get the to and from character codes for this box
@@ -422,11 +426,15 @@ function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text, sta
         }
  
         var selector = selector_prefix + 'box' + box; // add the box part
-        SpinIt(selector, num_spins, rate, LETTER_HEIGHT, final_pos, status);
+        SpinIt(selector, num_spins, rate, LETTER_HEIGHT, final_pos, delay);
     }
 }
 
-function SpinIt(selector, num_spins, rate, pixel_distance, final_pos, status) {
+function SpinIt(selector, num_spins, rate, pixel_distance, final_pos, delay) {
+    if (delay > DELAY_RED) {
+        $(selector).removeClass('letterbox');
+        $(selector).addClass('letterbox-red');
+    }
     var bpX = $(selector).css('backgroundPosition').split(' ')[0];
     var bpY = $(selector).css('backgroundPosition').split(' ')[1];
     var updateBpY = function (yDelta) {
