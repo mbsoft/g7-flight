@@ -16,6 +16,7 @@ var options = {
 var flightcheck = {
   init: function() {
     console.log('Started flight check...');
+    config.init();
     setInterval(this.expirator.bind(this), 60000); //check flight status every minute
   },
   expirator: function() {
@@ -103,7 +104,7 @@ var flightcheck = {
                         if (from_airport.length > 30) {
                           from_airport = from_airport.substring(0,30);
                         }
-
+	                   
                         // is the API reporting an estimated gate arrival time?
                         if (otimes.estimatedGateArrival||otimes.scheduledGateArrival) {
                           if (checkstatus == 'CHECKED')

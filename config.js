@@ -1,3 +1,4 @@
+var pg = require('pg');
 
 var Config = {
   //connectionString : 'postgres://homestead:secret@localhost/nouvel_ui',
@@ -23,8 +24,40 @@ var Config = {
   port: '3000',
   
   //Development
-  debug: true
+  debug: true,
+  
+  // DB Params
+  firstCheck: 0,
+  secondCheck: 0,
+  timeToCheck: 0,
+  estimateDelay: 0,
+  apiTimeout: 0,
+  
+  init: function() {
+    console.log('DB init of params');
+    pg.connect(Config.connectionString, function(err, client, done) {
+        if (err) {
+            done();
+            console.log(err);
+        }
+        var query = client.query("SELECT DISTINCT * FROM travelparams");
+ 
+        query.on('row', function(row) {
+            debugger;
+            Config.firstCheck = row.initialcheckflight;
+            Config.secondCheck = row.limitcheckflight;
+            Config.timeToCheck = row.timetocheck;
+            Config.estimateDelay = row.estimatedelayflight;
+            Config.apiTimeout = row.apitraveltimeoutflight;
+        });
+        query.on('end', function() {
+        done();
+        return;
+        });       
+    });
+  }
 }
+
 
 module.exports = Config;
 
