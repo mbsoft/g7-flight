@@ -196,7 +196,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
             "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
             "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
             "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid) " +
-            "WHERE tc.status != 'ARRIVED' " +
+            "WHERE tc.status != 'ARRIVED' AND tc.status != 'TERMINATED' AND tc.status != 'TRAVELID_ERROR' " +
             "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
                 
      query.on('row', function(row) {

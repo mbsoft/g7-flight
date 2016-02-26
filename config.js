@@ -13,7 +13,6 @@ var Config = {
   // Developer keys
   flightstatsAppID: '9e542dda',
   flightstatsAppKey : '52b0919821212f0df01a112f842e99df',
-  firstCheckTime: 848400,
   tzDesc: 'CET',
 
   //Logging
@@ -24,7 +23,7 @@ var Config = {
   port: '3000',
   
   //Development
-  debug: true,
+  debug: false,
   
   // DB Params
   firstCheck: 0,
@@ -32,6 +31,7 @@ var Config = {
   timeToCheck: 0,
   estimateDelay: 0,
   apiTimeout: 0,
+  limitCheck: 0,
   
   init: function() {
     console.log('DB init of params');
@@ -43,12 +43,12 @@ var Config = {
         var query = client.query("SELECT DISTINCT * FROM travelparams");
  
         query.on('row', function(row) {
-            debugger;
             Config.firstCheck = row.initialcheckflight;
             Config.secondCheck = row.limitcheckflight;
             Config.timeToCheck = row.timetocheck;
             Config.estimateDelay = row.estimatedelayflight;
             Config.apiTimeout = row.apitraveltimeoutflight;
+            Config.limitCheck = row.limitcheckflight;
         });
         query.on('end', function() {
         done();

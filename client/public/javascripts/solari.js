@@ -36,8 +36,8 @@ var LAST_CHAR_CODE = 96; // the last ASCII character that is represented in the 
 var CHAR_FACTOR = 2; // every N character in the letter image is a "real" character
 var IMAGE_HEIGHT = 20; // height of a single product or status image frame (in pixels)
 var IMAGE_FACTOR = 2; // every N picture in the letter image is a "real" image (i.e., not an in-between frame)
-var DEPARTURE_BOXES = 31; // number of letter boxes displayed in the departure column
-var DELAY_BOXES = 3;
+var DEPARTURE_BOXES = 30; // number of letter boxes displayed in the departure column
+var DELAY_BOXES = 4;
 var TIME_BOXES = 4; // number of letter boxes displayed in the time column
 var RIDES_BOXES = 2;
 var RIDER_BOXES = 20;
@@ -69,7 +69,7 @@ var URL_SUFFIX = "";
 
 var Status = {
     "none": 0,
-    "all_aboard": 1,
+    "terminated": "TERMINATED",
     "error": "TRAVELID_ERROR",
     "active": "ACTIVE",
     "arrived": "ARRIVED",
@@ -79,6 +79,7 @@ var Status = {
 var Airports = [
     {"name": "ROISSY AEROPORT", "iata":"CDG"},
     {"name": "ORLY","iata":"ORY"},
+    {"name": "ORLY AEROPORT", "iata":"ORY"},
     {"name": "ORLY VILLE","iata":"ORY"}
 ];
   
@@ -241,6 +242,9 @@ function addSolariBoard(divSelector) {
         // add the letter boxes in the middle column
         for (var add_cols = 0; add_cols < DELAY_BOXES; add_cols++) {
             $('#row' + add_rows + ' li.delay').append('<div id=delay-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
+            if (add_cols === 1) {
+                $('#row' + add_rows + ' li.delay').append('<div class=dot>H</div>');
+            }
         }
 
         // add the letter boxes in the middle column
@@ -301,8 +305,13 @@ function UpdateSolariRow(row, current_row, new_row) {
     }
     InsertChars('#stime-row' + row, TIME_BOXES, current_row.initialtravelarrival, new_row.initialtravelarrival, new_row);
 
-    current_row.delay = current_row.delay === "" ? "" : padLeft(current_row.delay, 3);
-    new_row.delay = new_row.delay === "" ? "" : padLeft(new_row.delay, 3);
+    if (new_row.travelers == undefined)
+        new_row.delay = "    ";
+    else if (new_row.delay <= 0)
+        new_row.delay = "0000";
+    else
+        new_row.delay =  padLeft((Math.floor(new_row.delay/60)).toString(), 2) + padLeft((new_row.delay % 60).toString(), 2);
+    
     InsertChars('#delay-row' + row, DELAY_BOXES, current_row.delay, new_row.delay, new_row);
 
     if (new_row.currentestimatetravelarrival !== "") {
@@ -334,7 +343,7 @@ function UpdateSolariRow(row, current_row, new_row) {
             current_departure = current_row.travelers[0].g7pickupzone + ' ' + current_row.travelers[0].travelid + ' ' + current_row.internationalname;
     }
     
-    if (new_row.status != Status.arrived && new_row.status != Status.error)
+    if (new_row.status != Status.arrived && new_row.status != Status.error && new_row.status != Status.terminated)
         SpinChars(rate, '#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row.delay);
     else
         InsertChars('#departure-row' + row, DEPARTURE_BOXES, current_departure, new_departure, new_row);
@@ -351,7 +360,7 @@ function UpdateSolariRow(row, current_row, new_row) {
     if (new_row.delay <= 0) {
         //Green
         var circle = 'circle-green';
-    } else if (new_row.delay > 0 && new_row.delay < DELAY_RED) {
+    } else if (new_row.delay > 0 && new_row.delay <= DELAY_RED) {
         // Yellow
         var circle = 'circle-yellow';
     } else {
@@ -374,13 +383,13 @@ function InsertChars(selector_prefix, max_boxes, current_text, new_text, new_row
             } else {
                 var character = new_text.toString().charAt(box);
             }            
-            if (new_row.status == Status.arrived)
+            if (new_row.status == Status.arrived || new_row.status == Status.terminated)
                 $(selector).html('<span class="board-arrived-text">'+character+'</span>');
             else if (new_row.status == Status.error)
                 $(selector).html('<span class="board-error-text">'+character+'</span>');
             else if (new_row.delay <= 0)
                 $(selector).html('<span class="board-green-text">'+character+'</span>');
-            else if (new_row.delay > 0 && new_row.delay < DELAY_RED)
+            else if (new_row.delay > 0 && new_row.delay <= DELAY_RED)
                 $(selector).html('<span class="board-yellow-text">'+character+'</span>');
             else
                 $(selector).html('<span class="board-red-text">'+character+'</span>'); 
