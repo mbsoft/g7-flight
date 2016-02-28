@@ -18,13 +18,13 @@ var Config = {
   //Logging
   logDirectory: './logs',
   logLevel: 'debug',
-  
+
   // Listen port
   port: '3000',
-  
+
   //Development
   debug: false,
-  
+
   // DB Params
   firstCheck: 0,
   secondCheck: 0,
@@ -32,7 +32,7 @@ var Config = {
   estimateDelay: 0,
   apiTimeout: 0,
   limitCheck: 0,
-  
+
   init: function() {
     console.log('DB init of params');
     pg.connect(Config.connectionString, function(err, client, done) {
@@ -41,7 +41,7 @@ var Config = {
             console.log(err);
         }
         var query = client.query("SELECT DISTINCT * FROM travelparams");
- 
+
         query.on('row', function(row) {
             Config.firstCheck = row.initialcheckflight;
             Config.secondCheck = row.limitcheckflight;
@@ -53,7 +53,7 @@ var Config = {
         query.on('end', function() {
         done();
         return;
-        });       
+        });
     });
   }
 }
