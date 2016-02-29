@@ -8,7 +8,8 @@ var app = require('../app');
 var debug = require('debug')('g7-flight:server');
 var http = require('http');
 var path = require('path');
-var config = require(path.join(__dirname,'../', 'config'));
+var env = process.env.G7TRAVEL_ENV;
+var config = require(path.join(__dirname,'../server/', 'config','/'+env+'.js'));
 /**
  * Get port from environment and store in Express.
  */

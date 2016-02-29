@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "supervisor --verbose ./bin/www"
+    "debug": "export G7TRAVEL_ENV=localdebug;node debug bin/www",
+    "start": "export G7TRAVEL_ENV=production;supervisor --verbose ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
