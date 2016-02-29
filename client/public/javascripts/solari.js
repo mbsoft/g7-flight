@@ -209,42 +209,6 @@ function addSolariBoard(divSelector) {
 
         // add a row
         appendRow($section, add_rows);
-
-        // add the letter boxes in the time column
-        for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
-            $('#row' + add_rows + ' li.stime').append('<div id=stime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
-            // insert a dot after the second box
-            if (add_time_col === 1) {
-                $('#row' + add_rows + ' li.stime').append('<div class=dot>H</div>');
-            }
-        }
-
-        // add the letter boxes in the time column
-        for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
-            $('#row' + add_rows + ' li.atime').append('<div id=atime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
-            // insert a dot after the second box
-            if (add_time_col === 1) {
-                $('#row' + add_rows + ' li.atime').append('<div class=dot>H</div>');
-            }
-        }
-
-        // add the letter boxes in the middle column
-        for (var add_cols = 0; add_cols < DELAY_BOXES; add_cols++) {
-            $('#row' + add_rows + ' li.delay').append('<div id=delay-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
-            if (add_cols === 1) {
-                $('#row' + add_rows + ' li.delay').append('<div class=dot>H</div>');
-            }
-        }
-
-        // add the letter boxes in the middle column
-        for (var add_cols = 0; add_cols < DEPARTURE_BOXES; add_cols++) {
-            $('#row' + add_rows + ' li.departure').append('<div id=departure-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
-        }
-
-        // add the letter boxes in the rides column
-        for (var add_rides_col = 0; add_rides_col < RIDES_BOXES; add_rides_col++) {
-            $('#row' + add_rows + ' li.rides').append('<div id=rides-row' + add_rows + 'box' + add_rides_col + ' class=letterbox></div>');
-        }
     }
     solari_setup_done = 1;
     window.setInterval(function (){updateSolariBoard()}, 1000 * REFRESH_TIME);
@@ -266,6 +230,42 @@ function appendRow(selector, row) {
         '<div class="traveler-expander"><ul class=\"solari-board-sub-columns rounded sub-header\">' +
         '<li class="index">IDX</li><li class="order">ORDER</li><li class="subscription">ABONNE</li>' +
         '<li class="rider">PASSAGER</li><li class="inittime">INIT TIME</li><li class="nexttime">NEXT TIME</li></ul></div></li>');
+
+    // add the letter boxes in the time column
+    for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
+        $('#row' + add_rows + ' li.stime').append('<div id=stime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
+        // insert a dot after the second box
+        if (add_time_col === 1) {
+            $('#row' + add_rows + ' li.stime').append('<div class=dot>H</div>');
+        }
+    }
+
+    // add the letter boxes in the time column
+    for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
+        $('#row' + add_rows + ' li.atime').append('<div id=atime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
+        // insert a dot after the second box
+        if (add_time_col === 1) {
+            $('#row' + add_rows + ' li.atime').append('<div class=dot>H</div>');
+        }
+    }
+
+    // add the letter boxes in the middle column
+    for (var add_cols = 0; add_cols < DELAY_BOXES; add_cols++) {
+        $('#row' + add_rows + ' li.delay').append('<div id=delay-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
+        if (add_cols === 1) {
+            $('#row' + add_rows + ' li.delay').append('<div class=dot>H</div>');
+        }
+    }
+
+    // add the letter boxes in the middle column
+    for (var add_cols = 0; add_cols < DEPARTURE_BOXES; add_cols++) {
+        $('#row' + add_rows + ' li.departure').append('<div id=departure-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
+    }
+
+    // add the letter boxes in the rides column
+    for (var add_rides_col = 0; add_rides_col < RIDES_BOXES; add_rides_col++) {
+        $('#row' + add_rows + ' li.rides').append('<div id=rides-row' + add_rows + 'box' + add_rides_col + ' class=letterbox></div>');
+    }
 }
 
 function updateSolariTable(board){
