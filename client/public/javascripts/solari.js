@@ -28,7 +28,7 @@
 // some constants and enums
 var RATE_VARIANCE = 4; // for determining random animation rate in milliseconds
 var RATE_BASE = 4; // for determining random animation rate in milliseconds
-var BOARD_ROWS = 24; // total number of rows displayed on the solari board
+var BOARD_ROWS = 12; // total number of rows displayed on the solari board
 var SECOND_SECTION_START = 8; // the first row that contains a next due case
 var LETTER_HEIGHT = 26; // height of a single letter frame (in pixels) in the letter image
 var FIRST_CHAR_CODE = 32; // the first ASCII character that is represented in the letter image
@@ -233,42 +233,57 @@ function appendRow(selector, row) {
 
     // add the letter boxes in the time column
     for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
-        $('#row' + add_rows + ' li.stime').append('<div id=stime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
+        $('#row' + row + ' li.stime').append('<div id=stime-row' + row + 'box' + add_time_col + ' class=letterbox></div>');
         // insert a dot after the second box
         if (add_time_col === 1) {
-            $('#row' + add_rows + ' li.stime').append('<div class=dot>H</div>');
+            $('#row' + row + ' li.stime').append('<div class=dot>H</div>');
         }
     }
 
     // add the letter boxes in the time column
     for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
-        $('#row' + add_rows + ' li.atime').append('<div id=atime-row' + add_rows + 'box' + add_time_col + ' class=letterbox></div>');
+        $('#row' + row + ' li.atime').append('<div id=atime-row' + row + 'box' + add_time_col + ' class=letterbox></div>');
         // insert a dot after the second box
         if (add_time_col === 1) {
-            $('#row' + add_rows + ' li.atime').append('<div class=dot>H</div>');
+            $('#row' + row + ' li.atime').append('<div class=dot>H</div>');
         }
     }
 
     // add the letter boxes in the middle column
     for (var add_cols = 0; add_cols < DELAY_BOXES; add_cols++) {
-        $('#row' + add_rows + ' li.delay').append('<div id=delay-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
+        $('#row' + row + ' li.delay').append('<div id=delay-row' + row + 'box' + add_cols + ' class=letterbox></div>');
         if (add_cols === 1) {
-            $('#row' + add_rows + ' li.delay').append('<div class=dot>H</div>');
+            $('#row' + row + ' li.delay').append('<div class=dot>H</div>');
         }
     }
 
     // add the letter boxes in the middle column
     for (var add_cols = 0; add_cols < DEPARTURE_BOXES; add_cols++) {
-        $('#row' + add_rows + ' li.departure').append('<div id=departure-row' + add_rows + 'box' + add_cols + ' class=letterbox></div>');
+        $('#row' + row + ' li.departure').append('<div id=departure-row' + row + 'box' + add_cols + ' class=letterbox></div>');
     }
 
     // add the letter boxes in the rides column
     for (var add_rides_col = 0; add_rides_col < RIDES_BOXES; add_rides_col++) {
-        $('#row' + add_rows + ' li.rides').append('<div id=rides-row' + add_rows + 'box' + add_rides_col + ' class=letterbox></div>');
+        $('#row' + row + ' li.rides').append('<div id=rides-row' + row + 'box' + add_rides_col + ' class=letterbox></div>');
     }
 }
 
 function updateSolariTable(board){
+    if (board.length > BOARD_ROWS) {
+        // Add Rows
+        for (row = BOARD_ROWS; row < board.length; row++) {
+            rowContainer = $('#departures .solari-board-rows');
+            // Add row with proper index
+            appendRow(rowContainer, row);
+            // Initialize the current_row
+            current_board[row] = EMPTY_ROW;
+        }
+    }
+
+    // Match the board size with rows available
+    // Set this to # board should default to
+    BOARD_ROWS = board.length;
+
     for (var row = 0; row < BOARD_ROWS; row++) {
         if ((board[row] === undefined)) {
             // make this an empty row
@@ -515,7 +530,7 @@ function updateSolariBoard() {
         if (new_board.length === 0) {
             clearBoard();
         } else {
-            //now that the nStatus values have been set, update the board
+            //Update the board
             updateSolariTable(new_board);
         }
         // update last refresh time text
