@@ -21,7 +21,7 @@ var Config = {
   port: '3000',
   
   //Development
-  debug: false,
+  debug: true,
   
   // DB Params
   firstCheck: 0,
