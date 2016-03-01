@@ -47,7 +47,7 @@ app.controller('mainController', function($scope, $http, $timeout) {
             data[i].subGridOptions = {
               enableSorting: false,
               enableColumnMenus: false,
-              columnDefs: [{name:"ID", field:"ridenumber", width: 100},{name:"Subscription Code", field:"subscriptioncode", width: 125},{name:"Requested By",field:"requestedby", width: 150}],
+              columnDefs: [{name:"ID", field:"ridenumber", width: 100},{name:"Subscription Code", field:"subscriptioncode", width: 125},{name:"Passenger",field:"refclient", width: 150},{name:"Initial Time",field:"initialdueridetimestamp",width:100},{name:"Next Time",field:"lastdueridetimestamp",width:100}],
               data: data[i].travelers
             }
           }
@@ -74,13 +74,20 @@ app.controller('mainController', function($scope, $http, $timeout) {
                 data[i].checktime = date.format("HH:MM dd/mm");
             } else
                 data[i].checktime = "N/A";
+            for (j=0; j< data[i].travelers.length; j++) {
+                var initDatetime = new Date(data[i].travelers[j].initialdueridetimestamp*1000);
+                data[i].travelers[j].initialdueridetimestamp = initDatetime.format("HH:MM dd/mm");
+                var nextDatetime = new Date(data[i].travelers[j].lastdueridetimestamp*1000);
+                data[i].travelers[j].lastdueridetimestamp = nextDatetime.format("HH:MM dd/mm");
+            }
           data[i].subGridOptions = {
             enableSorting: false,
             enableColumnMenus: false,
             columnDefs: [{name:"ID", field:"ridenumber", width: 100},
                          {name:"Subscription Code", field:"subscriptioncode", width: 125},
-                         {name:"Passenger",field:"requestedby", width: 150},
-                         {name:"Requested By",field:"refclient", width: 150}],
+                         {name:"Passenger",field:"refclient", width: 150},
+                         {name:"Initial Time",field:"initialdueridetimestamp", width: 100},
+                         {name:"Next Time",field:"lastdueridetimestamp", width: 100}],
             data: data[i].travelers
           }
         }

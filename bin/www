@@ -10,10 +10,11 @@ var http = require('http');
 var path = require('path');
 var env = process.env.G7TRAVEL_ENV;
 var config = require(path.join(__dirname,'../server/', 'config','/'+env+'.js'));
+
 /**
  * Get port from environment and store in Express.
  */
-
+debugger;
 var port = normalizePort(config.port || '3000'); //normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 

@@ -18,8 +18,9 @@ var options = {
 var flightcheck = {
   init: function() {
     console.log('Started flight check...');
+    debugger;
     config.init();
-    setInterval(this.expirator.bind(this), 60000); //check flight status every minute
+    setInterval(this.expirator.bind(this), 15000); //check for flights to check every 15 seconds - NOT checking the API every 15 seconds
   },
   
   flightStatsError: function(travelid) {

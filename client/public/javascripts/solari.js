@@ -642,10 +642,12 @@ function populateSubRow(rowIndex, mainRow){
             // Fill out the letter boxes for RIDER
             InsertSubChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient, false);
 
-            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);
-
-            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp+(mainRow.delay*60), 'X').format('HHmm','fr'), false);
-
+            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);     
+            if (mainRow.delay >= 15)
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp+(mainRow.delay*60), 'X').format('HHmm','fr'), false);
+            else
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);
+ 
             // Fill out the letter boxes for REQUESTOR
             //InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby, false);
         });
