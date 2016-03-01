@@ -1,9 +1,7 @@
 var pg = require('pg');
 
 var Config = {
-  connectionString : 'postgres://homestead:secret@localhost/nouvel_ui',
-  //connectionString : 'postgres://localhost/nouvel_ui',
-  //connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
+  connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
   // Flight Stats API production key API values provided by Ludovic
@@ -18,13 +16,13 @@ var Config = {
   //Logging
   logDirectory: './logs',
   logLevel: 'debug',
-
+  
   // Listen port
-  port: '3000',
-
+  port: '80',
+  
   //Development
-  debug: true,
-
+  debug: false,
+  
   // DB Params
   firstCheck: 0,
   secondCheck: 0,
@@ -32,7 +30,7 @@ var Config = {
   estimateDelay: 0,
   apiTimeout: 0,
   limitCheck: 0,
-
+  
   init: function() {
     console.log('DB init of params');
     pg.connect(Config.connectionString, function(err, client, done) {
@@ -41,7 +39,7 @@ var Config = {
             console.log(err);
         }
         var query = client.query("SELECT DISTINCT * FROM travelparams");
-
+ 
         query.on('row', function(row) {
             Config.firstCheck = row.initialcheckflight;
             Config.secondCheck = row.limitcheckflight;
@@ -53,7 +51,7 @@ var Config = {
         query.on('end', function() {
         done();
         return;
-        });
+        });       
     });
   }
 }

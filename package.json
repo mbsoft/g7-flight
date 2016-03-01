@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "supervisor --verbose ./bin/www"
+    "debug": "export G7TRAVEL_ENV=localdebug;node debug bin/www",
+    "start": "export G7TRAVEL_ENV=production;supervisor --verbose ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -11,6 +12,7 @@
     "debug": "~2.2.0",
     "express": "~4.13.1",
     "jade": "~1.11.0",
+    "moment": "^2.11.2",
     "morgan": "~1.6.1",
     "pg": "^4.4.3",
     "serve-favicon": "~2.3.0"

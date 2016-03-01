@@ -6,6 +6,6 @@ var client = new pg.Client(connectionString);
 
 client.connect();
 
-var query = client.query('CREATE TABLE travelparams (initialCheckFlight int,limitCheckFlight int,timeToCheck int,estimateDelayFlight int,apiTravelTimeoutFlight int');
+var query = client.query('CREATE TABLE travelparams (initialCheckFlight int,limitCheckFlight int,timeToCheck int,estimateDelayFlight int,apiTravelTimeoutFlight int)');
 
 query.on('end', function() { client.end(); });
