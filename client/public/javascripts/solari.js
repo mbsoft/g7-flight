@@ -201,7 +201,7 @@ function addSolariBoard(divSelector) {
         $('#show-solari').show();
     });
     // and show it
-    var $section = $('#departures .solari-board-rows');
+    var $section = '#departures .solari-board-rows';
 
     // build the solari board
     for (var add_rows = 0; add_rows < BOARD_ROWS; add_rows++) {
