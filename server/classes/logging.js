@@ -7,7 +7,8 @@ var path = require("path");
 var os = require("os");
 // We configure, and then export, the default winston logger.
 var logger = require("winston");
-var config = require(path.join(__dirname, '../', '../', 'config'));
+var env = process.env.G7TRAVEL_ENV;
+var config = require(path.join(__dirname, '../', 'config/'+env+'.js'));
 // Winston configuration. This will be taken care of when this module is
 // first required, even if nothing is used from it.
 // Additional log level of "requests" above standard to allow requests to
