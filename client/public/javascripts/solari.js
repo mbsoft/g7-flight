@@ -28,6 +28,7 @@
 // some constants and enums
 var RATE_VARIANCE = 4; // for determining random animation rate in milliseconds
 var RATE_BASE = 4; // for determining random animation rate in milliseconds
+var INITIAL_BOARD_ROWS = 12;
 var BOARD_ROWS = 12; // total number of rows displayed on the solari board
 var SECOND_SECTION_START = 8; // the first row that contains a next due case
 var LETTER_HEIGHT = 26; // height of a single letter frame (in pixels) in the letter image
@@ -221,8 +222,12 @@ function NextDue(id, time, offset, add_class) {
     $(id + ' .inner').attr('class', 'inner ' + add_class); // reset the applied classes
 }
 
+function removeRow(selector, row) {
+    $(selector+ " #row"+row).remove();
+}
+
 function appendRow(selector, row) {
-    selector.append('<li class=board-data id=row' + row +
+    $(selector).append('<li class=board-data id=row' + row +
         '><ul class="master-row"><li class=expander><a href="#" id=expander' + row +
         '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span>' +
         '</span></li><li class=stime></li><li class=delay></li><li class=atime></li>' +
@@ -269,11 +274,15 @@ function appendRow(selector, row) {
 }
 
 function updateSolariTable(board){
+    rowContainer = '#departures .solari-board-rows';
+
+    // If the content is larger than the board
+    // Grow it
     if (board.length > BOARD_ROWS) {
         // Add Rows
         for (row = BOARD_ROWS; row < board.length; row++) {
-            rowContainer = $('#departures .solari-board-rows');
             // Add row with proper index
+            removeRow(rowContainer, row);
             appendRow(rowContainer, row);
             // Initialize the current_row
             current_board[row] = EMPTY_ROW;
@@ -281,8 +290,18 @@ function updateSolariTable(board){
     }
 
     // Match the board size with rows available
-    // Set this to # board should default to
     BOARD_ROWS = board.length;
+
+    // If the board gets smaller, remove the extra rows
+    // Fill them with an empty row to initial size
+    if (BOARD_ROWS < INITIAL_BOARD_ROWS) {
+        for (row = BOARD_ROWS; row < INITIAL_BOARD_ROWS; row++) {
+            $('#row' + row).remove();
+            removeRow(rowContainer, row);
+            appendRow(rowContainer, row);
+        }
+    }
+
 
     for (var row = 0; row < BOARD_ROWS; row++) {
         if ((board[row] === undefined)) {
@@ -517,7 +536,6 @@ function updateSolariBoard() {
         return;
     }
     syncing = true;
-    console.log('update solariboard');
     $.getJSON(URL, function(new_board) {
         console.log(new_board);
         syncing = false;
@@ -616,7 +634,7 @@ function populateSubRow(rowIndex, mainRow){
             //    $('#row'+rowIndex+'sub-row'+index+' li.requestor').append('<div id=requestor-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
             //}
 
-	        InsertSubChars('#row'+rowIndex+'sub-row'+index+' #index-row'+rowIndex, INDEX_BOXES, '', padLeft(count--, 2), false);
+	InsertSubChars('#row'+rowIndex+'sub-row'+index+' #index-row'+rowIndex, INDEX_BOXES, '', padLeft(count--, 2), false);
 
             InsertSubChars('#row'+rowIndex+'sub-row'+index+' #order-row'+rowIndex, ORDERNBR_BOXES, '', value.ridenumber, false);
             // Fill out the letter boxes for SUBSCRIPTION
