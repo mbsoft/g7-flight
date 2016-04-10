@@ -11,7 +11,7 @@ var Config = {
   // Developer keys
   flightstatsAppID: '9e542dda',
   flightstatsAppKey : '52b0919821212f0df01a112f842e99df',
-  tzDesc: 'CET',
+  tzDesc: 'CEST',
 
   //Logging
   logDirectory: './logs',

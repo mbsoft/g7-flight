@@ -2,6 +2,7 @@ var pg = require('pg');
 
 var Config = {
   connectionString : 'postgres://localhost/nouvel_ui',
+  //connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
   // Flight Stats API production key API values provided by Ludovic
@@ -11,7 +12,7 @@ var Config = {
   // Developer keys
   flightstatsAppID: '9e542dda',
   flightstatsAppKey : '52b0919821212f0df01a112f842e99df',
-  tzDesc: 'CET',
+  tzDesc: 'EDT',
 
   //Logging
   logDirectory: './logs',

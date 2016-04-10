@@ -46,9 +46,9 @@ var travel2check = {
                 }
               
                 client.query("INSERT INTO travelchecking VALUES (" +
-                    "DEFAULT,'INITIAL','" + f.travelid + "','" + f.pickupday + "','" +
+                    "DEFAULT,'UNCHECKED','" + f.travelid + "','" + f.pickupday + "','" +
                     f.fromplace.toUpperCase() + "','" + f.internationalcode + "','A',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "'," +
-                    "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "',NULL)");
+                    "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "',NULL,0)");
                 done();
                 });
             }

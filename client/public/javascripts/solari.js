@@ -49,6 +49,7 @@ var REQUESTOR_BOXES = 30;
 var DELAY_RED = 15;
 var REFRESH_TIME = 20; //refresh time in seconds
 var EMPTY_ROW = {
+    "color": "green",
     "status": "",
     "initialtravelarrival": "",
     "delay": "",
@@ -125,13 +126,6 @@ function addSolariBoard(divSelector) {
             "<li id=\"point\">H</li>" +
             "<li id=\"min\"></li>" +
             "</ul>" +
-            "</div>" +
-            "<div id=\"next-due\">" +
-            "<p>Next due:</p>" +
-            "<div class=\"inner low\">" +
-            "<span class=\"clock\">00:00</span>" +
-            "<span class=\"today\"></span>" +
-            "</div>" +
             "</div>" +
             "</header>" +
             "<ul class=\"solari-board-columns rounded\">" +
@@ -229,7 +223,7 @@ function removeRow(selector, row) {
 function appendRow(selector, row) {
     $(selector).append('<li class=board-data id=row' + row +
         '><ul class="master-row"><li class=expander><a href="#" id=expander' + row +
-        '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span>' +
+        '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span class="circle">' +
         '</span></li><li class=stime></li><li class=delay></li><li class=atime></li>' +
         '<li class=departure></li><li class="rides"></li></ul>' +
         '<div class="traveler-expander"><ul class=\"solari-board-sub-columns rounded sub-header\">' +
@@ -271,6 +265,7 @@ function appendRow(selector, row) {
     for (var add_rides_col = 0; add_rides_col < RIDES_BOXES; add_rides_col++) {
         $('#row' + row + ' li.rides').append('<div id=rides-row' + row + 'box' + add_rides_col + ' class=letterbox></div>');
     }
+
 }
 
 function updateSolariTable(board){
@@ -325,8 +320,6 @@ function updateSolariTable(board){
                 next_due = board[row].origarrtime;
         }
     }
-     if (next_due != undefined)
-        NextDue("#next-due", moment(next_due, 'X').format('HH \\H\\ mm','fr'), '', '');
 
 }
 
@@ -391,19 +384,14 @@ function UpdateSolariRow(row, current_row, new_row) {
 
     //clear and apply status class
     var circle = 'circle-green';
-    if (new_row.delay <= 0) {
-        //Green
-        var circle = 'circle-green';
-    } else if (new_row.delay > 0 && new_row.delay <= DELAY_RED) {
-        // Yellow
-        var circle = 'circle-yellow';
-    } else {
-        // Red > 15
-        var circle = 'circle-red';
-    }
+    if (new_row.color == 'orange')
+         circle = 'circle-yellow';
+    else if (new_row.color == 'red')
+        circle = 'circle-red';
 
-   $("#row" + row + " ul li.status span").attr('class', 'circle');
-   $("#row" + row + " ul li.status span").addClass(circle);
+
+  $("#row" + row + " ul li.status span").attr('class', 'circle');
+  $("#row" + row + " ul li.status span").addClass(circle);
 }
 
 // Loop through letter boxes in each row and populate with each charater
@@ -421,12 +409,12 @@ function InsertChars(selector_prefix, max_boxes, current_text, new_text, new_row
                 $(selector).html('<span class="board-arrived-text">'+character+'</span>');
             else if (new_row.status == Status.error)
                 $(selector).html('<span class="board-error-text">'+character+'</span>');
-            else if (new_row.delay <= 0)
+            else 
                 $(selector).html('<span class="board-green-text">'+character+'</span>');
-            else if (new_row.delay > 0 && new_row.delay <= DELAY_RED)
-                $(selector).html('<span class="board-yellow-text">'+character+'</span>');
-            else
-                $(selector).html('<span class="board-red-text">'+character+'</span>');
+            //else if (new_row.delay > 0 && new_row.delay <= DELAY_RED)
+            //    $(selector).html('<span class="board-yellow-text">'+character+'</span>');
+            //else
+            //    $(selector).html('<span class="board-red-text">'+character+'</span>');
         } else {
             $(selector).html('<span class="board-text"></span>');
         }
@@ -474,10 +462,10 @@ function SpinChars(rate, selector_prefix, max_boxes, current_text, new_text, del
 }
 
 function SpinIt(selector, num_spins, rate, pixel_distance, final_pos, delay) {
-    if (delay > DELAY_RED) {
-        $(selector).removeClass('letterbox');
-        $(selector).addClass('letterbox-red');
-    }
+//    if (delay > DELAY_RED) {
+//        $(selector).removeClass('letterbox');
+//        $(selector).addClass('letterbox-red');
+//    }
     var bpX = $(selector).css('backgroundPosition').split(' ')[0];
     var bpY = $(selector).css('backgroundPosition').split(' ')[1];
     var updateBpY = function (yDelta) {
@@ -634,7 +622,7 @@ function populateSubRow(rowIndex, mainRow){
             //    $('#row'+rowIndex+'sub-row'+index+' li.requestor').append('<div id=requestor-row' + rowIndex + 'box' + add_cols + ' class=subletterbox></div>');
             //}
 
-	InsertSubChars('#row'+rowIndex+'sub-row'+index+' #index-row'+rowIndex, INDEX_BOXES, '', padLeft(count--, 2), false);
+	        InsertSubChars('#row'+rowIndex+'sub-row'+index+' #index-row'+rowIndex, INDEX_BOXES, '', padLeft(count--, 2), false);
 
             InsertSubChars('#row'+rowIndex+'sub-row'+index+' #order-row'+rowIndex, ORDERNBR_BOXES, '', value.ridenumber, false);
             // Fill out the letter boxes for SUBSCRIPTION
@@ -642,9 +630,12 @@ function populateSubRow(rowIndex, mainRow){
             // Fill out the letter boxes for RIDER
             InsertSubChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient, false);
 
-            InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);     
+            if (value.lastdueridetimestamp > 0)
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.lastdueridetimestamp, 'X').format('HHmm','fr'), false);
+            else
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);     
             if (mainRow.delay >= 15)
-                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp+(mainRow.delay*60), 'X').format('HHmm','fr'), false);
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(mainRow.arrtime, 'X').format('HHmm','fr'), false);
             else
                 InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);
  

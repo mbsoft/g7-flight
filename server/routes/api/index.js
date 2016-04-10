@@ -1,4 +1,5 @@
 var express = require('express');
+var _ = require('underscore');
 //var router = express.Router();
 var apirouter = express();
 var pg = require('pg');
@@ -23,6 +24,31 @@ var G7Router = function(routeType) {
     };
 };
 
+var arrUnique = function(arr) {
+    //deal with some duplicate results
+    var cleaned = [];
+    arr.forEach(function(itm) {
+        var unique = true;
+        cleaned.forEach(function(itm2) {
+            if (_.isEqual(itm, itm2)) unique = false; 
+        });
+        if (unique) cleaned.push(itm);
+    });
+    return cleaned;
+};
+
+var arrFuture = function(row) {
+    var travelers = row.travelers;
+    var cleaned = [];
+    travelers.forEach(function(itm) {
+        debugger;
+       if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
+        cleaned.push(itm);
+       else if (itm.initialdueridetimestamp <= row.arrtime)
+        cleaned.push(itm);
+    });
+    return cleaned;
+};
 
 // POST - update a traveler record
 apirouter.post('/v1/travelers/update', function(req, res, err1) {
@@ -40,14 +66,14 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                // no change in travelid so just udpate traveler record
                var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
                 "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
-                "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
-                "ridestatus=($11) WHERE ridenumber=($12)",
+                "fromplace=($7),typeofplace=($8),lastdueridetimestamp=($9)," +
+                "ridestatus=($10) WHERE ridenumber=($11)",
                 [reqBody.travelid,
                  reqBody.pickupday, reqBody.subscriptioncode,
                  reqBody.refclient, reqBody.requestedby,
                  reqBody.g7pickupzone, reqBody.fromplace,
-                 reqBody.typeofplace, reqBody.initialdueridetimestamp,
-                 row.lastdueridetimestamp, row.ridestatus, reqBody.ridenumber]);
+                 reqBody.typeofplace, 
+                 reqBody.initialdueridetimestamp, row.ridestatus, reqBody.ridenumber]);
            } else {
                // changed flights so need to see if there's any need to 
                // continue doing travel checking on the saved flight
@@ -196,8 +222,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
             "extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS arrtime," +
             "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
             "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
-            "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid) " +
-            "WHERE tc.status != 'ARRIVED' AND tc.status != 'TERMINATED' AND tc.status != 'TRAVELID_ERROR' " +
+            "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid)  WHERE travelers.initialdueridetimestamp < extract(epoch FROM tc.currentestimatetravelarrival AT TIME ZONE 'CET')" +
             "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
                 
      query.on('row', function(row) {
@@ -210,7 +235,28 @@ apirouter.get('/v1/travelboard', function(req, res) {
             row.delay = 0;
         }
         row.nbrtravelers = row.travelers.length;
-        results.push(row);
+        var currentTime = Math.floor(Date.now() / 1000);
+        
+        row.color = 'green';
+        //debugger;
+        if ((row.origarrtime - currentTime <= 15*60) && row.delay > 15)
+            row.color = 'red';
+        else if ((row.origarrtime - currentTime > 15*60) && row.delay > 15)
+            row.color = 'orange';
+        //if (row.checkiteration == 1 && row.delay > 15)
+        //    row.color = 'orange';
+        //if (row.checkiteration == 2 && row.delay > 15)
+        //    row.color = 'red';
+            
+        if (row.status != 'TRAVELID_ERROR' && row.status != 'TERMINATED' && row.delay > 15 && row.arrtime > (currentTime + 5*60)) {
+            
+            row.travelers = arrUnique(row.travelers);
+            row.travelers = arrFuture(row);
+            if (row.travelers.length > 0) {
+                row.nbrtravelers = row.travelers.length;
+                results.push(row);
+            }
+        }
     });
     query.on('end', function() {
       done();

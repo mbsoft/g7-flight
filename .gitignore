@@ -1,2 +1,11 @@
 npm-debug.log
 node_modules/*
+client/public/osm-read/*
+
+
+
+client/public/osm-read/test/manyNodesTest.js
+
+client/public/osm-read/test/zlibTest.js
+
+client/public/osm-read/test/xmlPbfTest.js
