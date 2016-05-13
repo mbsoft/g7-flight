@@ -4,6 +4,8 @@ var Config = {
   connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
+  trainPath: '/v1/coverage/sncf/vehicle_journeys',
+  trainUserKey: '66ecc2fe-1fe6-43ae-ad6d-f30b3ea4f79a',
   // Flight Stats API production key API values provided by Ludovic
   // from Taxis G7
   //flightstatsAppID :'9e542dda',
@@ -30,6 +32,10 @@ var Config = {
   estimateDelay: 0,
   apiTimeout: 0,
   limitCheck: 0,
+  firstCheckTrain: 0,
+  secondCheckTrain: 0,
+  estimateDelayTrain: 0,
+  apiTimeoutTrain: 0,
   
   init: function() {
     console.log('DB init of params');
@@ -47,6 +53,10 @@ var Config = {
             Config.estimateDelay = row.estimatedelayflight;
             Config.apiTimeout = row.apitraveltimeoutflight;
             Config.limitCheck = row.limitcheckflight;
+            Config.firstCheckTrain = row.initialchecktrain;
+            Config.secondCheckTrain = row.limitchecktrain;
+            Config.estimateDelayTrain = row.estimatedelaytrain;
+            Config.apiTimeoutTrain = row.apitraveltimeouttrain;
         });
         query.on('end', function() {
         done();

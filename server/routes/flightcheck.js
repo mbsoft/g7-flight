@@ -46,13 +46,15 @@ var flightcheck = {
   
   flightStatsDoCheck: function(f, status) {
     console.log(Date.now().toLocaleString() + " API check");
-    //debugger;
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
+    if (travid.length == 1) {
+        travid.push(travid[0]);
+    }
     var travelid = f.travelid.substring(0,2) + f.travelid.substring(2,f.travelid.length);
     var checkstatus = f.status;
     var currentestimate = f.currentestimatetravelarrival;
-    options.path = config.flightstatsPath + travid[0] +'/'
-        + travid[1]
+    options.path = config.flightstatsPath + travid[0].trim().toUpperCase() +'/'
+        + travid[1].trim().toUpperCase()
         + '/arr/20' + f.pickupday.substring(6,8) + '/' + f.pickupday.substring(3,5) + '/' + f.pickupday.substring(0,2)
         +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false' + '&airport=' + f.internationalcode;
         
@@ -61,9 +63,14 @@ var flightcheck = {
     
     var req = https.request(options, function(res,options) {
     res.on('data', function(data){
-        var fd = JSON.parse(data);
+        var fd;
+        try {
+            fd = JSON.parse(data);
+        } catch (err)  {
+            flightcheck.flightStatsError(travelid);
+            return;
+        }
         console.log(travelid + ' ' + checkstatus);
-        debugger;
         if (fd.error == null) {
         if (fd.flightStatuses.length == 0) {
             flightcheck.flightStatsError(travelid);      
@@ -218,7 +225,7 @@ var flightcheck = {
         console.log(err);
       }
       var nowTime = Math.floor(Date.now()/1000);
-      var query = client.query("SELECT *, to_char(currentestimatetravelarrival,'YYYY-MM-DD HH24:MM:ss') as current FROM travelchecking WHERE (checkiteration < 99 OR checkiteration = NULL) AND status != 'TRAVELID_ERROR' AND status != 'ARRIVED' AND status != 'TERMINATED';");
+      var query = client.query("SELECT *, to_char(currentestimatetravelarrival,'YYYY-MM-DD HH24:MM:ss') as current FROM travelchecking WHERE (checkiteration < 99 OR checkiteration = NULL) AND typeofplace ='A' AND status != 'TRAVELID_ERROR' AND status != 'ARRIVED' AND status != 'TERMINATED';");
       query.on('row', function(row) {
         results.push(row);
       });

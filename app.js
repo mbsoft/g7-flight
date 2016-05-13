@@ -11,6 +11,7 @@ var testroutes = require('./server/routes/test/index');
 
 var flightcheck = require('./server/routes/flightcheck');
 var traveler2check = require('./server/routes/traveler2check');
+var traincheck = require('./server/routes/traincheck');
 
 var app = express();
 
@@ -29,6 +30,7 @@ app.use('/test', testroutes);
 
 traveler2check.init();
 flightcheck.init();
+traincheck.init();
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

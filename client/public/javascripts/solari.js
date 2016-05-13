@@ -131,16 +131,16 @@ function addSolariBoard(divSelector) {
             "<ul class=\"solari-board-columns rounded\">" +
             "<li class=\"expander\"></li>" +
             "<li class=\"status\"></li>" +
-            "<li class=\"stime\">Scheduled</li>" +
-            "<li class=\"delay\">Delay</li>" +
-            "<li class=\"atime\">Actual</li>" +
-            "<li class=\"departure\">Flight-Departure City</li>" +
-            "<li class=\"rides\">Rides</li>" +
+            "<li class=\"stime\">H. initiale</li>" +
+            "<li class=\"delay\">Retard</li>" +
+            "<li class=\"atime\">H. prevue</li>" +
+            "<li class=\"departure\">Informations</li>" +
+            "<li class=\"rides\">Nbre</li>" +
             "</ul>" +
             "<ul class=\"solari-board-rows rounded\">" +
             "</ul>" +
             "</div>" +
-            "<div id=\"last-updated\">Last updated: <span>n/a</span> (<span id=\"last-updated-human\"></span>)</div>" +
+            "<div id=\"last-updated\">Derni<C3><A8>re mise a jour: <span>n/a</span> (<span id=\"last-updated-human\"></span>)</div>" +
             "</div>" +
             "</div>" +
             "</div>").html();
@@ -227,8 +227,8 @@ function appendRow(selector, row) {
         '</span></li><li class=stime></li><li class=delay></li><li class=atime></li>' +
         '<li class=departure></li><li class="rides"></li></ul>' +
         '<div class="traveler-expander"><ul class=\"solari-board-sub-columns rounded sub-header\">' +
-        '<li class="index">IDX</li><li class="order">ORDER</li><li class="subscription">ABONNE</li>' +
-        '<li class="rider">PASSAGER</li><li class="inittime">INIT TIME</li><li class="nexttime">NEXT TIME</li></ul></div></li>');
+        '<li class="index">Idx</li><li class="order">N<C2><B0> course</li><li class="subscription">ABONNE</li>' +
+        '<li class="rider">PASSAGER</li><li class="inittime">Heure enrg</li><li class="nexttime">Nlle Heure</li></ul></div></li>');
 
     // add the letter boxes in the time column
     for (var add_time_col = 0; add_time_col < TIME_BOXES; add_time_col++) {
@@ -532,7 +532,7 @@ function updateSolariBoard() {
             return;
         }
         //redraw label if recovering from a fail
-        $("ul.solari-board-columns li.departure").text("Flight-Departure City");
+        $("ul.solari-board-columns li.departure").text("Informations de Vol");
         if (new_board.length === 0) {
             clearBoard();
         } else {

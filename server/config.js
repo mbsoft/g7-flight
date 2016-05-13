@@ -32,7 +32,11 @@ var Config = {
   estimateDelay: 0,
   apiTimeout: 0,
   limitCheck: 0,
-
+  firstCheckTrain: 0,
+  secondCheckTrain: 0,
+  estimateDelayTrain: 0,
+  apiTimeoutTrain: 0,
+  
   init: function() {
     console.log('DB init of params');
     pg.connect(Config.connectionString, function(err, client, done) {
@@ -49,6 +53,10 @@ var Config = {
             Config.estimateDelay = row.estimatedelayflight;
             Config.apiTimeout = row.apitraveltimeoutflight;
             Config.limitCheck = row.limitcheckflight;
+            Config.firstCheckTrain = row.initialchecktrain;
+            Config.secondCheckTrain = row.limitchecktrain;
+            Config.estimateDelayTrain = row.estimatedelaytrain;
+            Config.apiTimeoutTrain = row.apitraveltimeouttrain;
         });
         query.on('end', function() {
         done();

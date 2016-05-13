@@ -41,11 +41,12 @@ var arrFuture = function(row) {
     var travelers = row.travelers;
     var cleaned = [];
     travelers.forEach(function(itm) {
-        debugger;
-       if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
-        cleaned.push(itm);
-       else if (itm.initialdueridetimestamp <= row.arrtime)
-        cleaned.push(itm);
+       if (itm.pickupday == row.pickupday) {        
+            if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
+                cleaned.push(itm);
+            else if (itm.initialdueridetimestamp <= row.arrtime)
+                cleaned.push(itm);
+       }
     });
     return cleaned;
 };
@@ -54,6 +55,18 @@ var arrFuture = function(row) {
 apirouter.post('/v1/travelers/update', function(req, res, err1) {
     
     var reqBody = req.body;
+    
+    // validate the travel ID parameter
+    var travelid = reqBody.travelid;
+    // No need to store short travelid's
+    if (travelid.length < 3)
+        return res.json();
+    var strLen = travelid.length;
+    // No need to store travelid's with non-ASCII chars?
+    for (var i = 0, strLen = travelid.length; i < strLen; ++i) {
+        if (travelid.charCodeAt(i) > 127)
+            return res.json();
+    } 
     
     pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
@@ -119,6 +132,18 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
 apirouter.post('/v1/travelers/add', function(req, res, err1) {
     var reqBody = req.body;
 
+    // validate the travel ID parameter
+    var travelid = reqBody.travelid;
+    debugger;
+    // No need to store short travelid's
+    if (travelid.length < 3)
+        return res.json();
+    var strLen = travelid.length;
+    // No need to store travelid's with non-ASCII chars?
+    for (var i = 0, strLen = travelid.length; i < strLen; ++i) {
+        if (travelid.charCodeAt(i) > 127)
+            return res.json();
+    }    
     pg.connect(config.connectionString, function(err, client, done) {
        if (err) {
            console.log(err);
@@ -238,7 +263,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
         var currentTime = Math.floor(Date.now() / 1000);
         
         row.color = 'green';
-        //debugger;
+
         if ((row.origarrtime - currentTime <= 15*60) && row.delay > 15)
             row.color = 'red';
         else if ((row.origarrtime - currentTime > 15*60) && row.delay > 15)
@@ -248,8 +273,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
         //if (row.checkiteration == 2 && row.delay > 15)
         //    row.color = 'red';
             
-        if (row.status != 'TRAVELID_ERROR' && row.status != 'TERMINATED' && row.delay > 15 && row.arrtime > (currentTime + 5*60)) {
-            
+        if (row.status != 'TRAVELID_ERROR' && row.status != 'TERMINATED' && row.delay > 15 && row.arrtime > (currentTime + 5*60)) {    
             row.travelers = arrUnique(row.travelers);
             row.travelers = arrFuture(row);
             if (row.travelers.length > 0) {
