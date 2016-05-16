@@ -13,6 +13,8 @@ var flightcheck = require('./server/routes/flightcheck');
 var traveler2check = require('./server/routes/traveler2check');
 var traincheck = require('./server/routes/traincheck');
 
+var dailycleanup = require('./server/routes/cleanup');
+
 var app = express();
 
 // view engine setup
@@ -31,6 +33,7 @@ app.use('/test', testroutes);
 traveler2check.init();
 flightcheck.init();
 traincheck.init();
+cleanup.init();
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

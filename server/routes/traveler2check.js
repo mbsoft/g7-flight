@@ -39,7 +39,8 @@ var travel2check = {
           results.forEach(function(f){
             // transfer orders that are coming due in the next hour
             
-            if (f.initialdueridetimestamp - (60+5)*60*24 <= timeNow) {
+            if ((f.initialdueridetimestamp - (60+5)*60 <= timeNow) &&
+                (f.initialdueridetimestamp - timeNow > 0)) {
                 console.log(f.travelid + ' ' + f.initialdueridetimestamp + ' ' + f.internationalcode);
                 pg.connect(config.connectionString, function(err, client, done) {
                 if (err) {
