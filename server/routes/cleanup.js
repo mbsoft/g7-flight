@@ -10,7 +10,7 @@ var logger = require(path.join(__dirname, '../', 'classes','logging')).logger;
 var cleanup = {
   init: function() {
     console.log('Started cleanup...');
-    setInterval(this.expirator.bind(this), 86400 * 1000); //daily table cleanup
+    setInterval(this.expirator.bind(this), 3600 * 1000); //daily table cleanup
   },
   
   expirator: function() {
@@ -21,8 +21,8 @@ var cleanup = {
         console.log(err);
       }
       var timeNow = Math.floor(Date.now()/1000);
-      console.log("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)");
-      //client.query("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)")
+      //console.log("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)");
+      client.query("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)")
       done();
      });
   }

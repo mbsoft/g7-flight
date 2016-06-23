@@ -100,7 +100,7 @@ var traincheck = {
                     var stopFound = false;
                     for (var k=0; k < stops.length; k++) {
                         //debugger;
-                        if (stops[k].stop_point.name == results[0].internationalname) {
+                        if (results.length > 0 && stops[k].stop_point.name == results[0].internationalname) {
                             //found the stop, now get the arrival time
                             stopFound = true;
                             var sArrive = moment().format('YYYY-MM-DD') + stops[k].arrival_time;
@@ -188,7 +188,14 @@ var traincheck = {
     
     req.end();
     req.on('error', function(err){
-        
+        pg.connect(config.connectionString, function(err, client, done) {
+            if (err) {
+                done();
+                console.log(err);
+            }
+            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+            done();
+        });
     });
     // Log the check in the API call table
     traincheck.trainLogApi(f, options.path);

@@ -16,6 +16,8 @@ var traincheck = require('./server/routes/traincheck');
 var dailycleanup = require('./server/routes/cleanup');
 
 var app = express();
+var env = process.env.G7TRAVEL_ENV;
+var config = require(path.join(__dirname, './','server', 'config/'+env+'.js'));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -30,9 +32,12 @@ app.use('/', routes);
 app.use('/api', apiroutes);
 app.use('/test', testroutes);
 
-traveler2check.init();
-flightcheck.init();
-traincheck.init();
+// Allows us to run g7-flight as just a client service for the travelboard
+if (!config.debug) {
+  traveler2check.init();
+  flightcheck.init();
+  traincheck.init();
+}
 cleanup.init();
 
 // catch 404 and forward to error handler
