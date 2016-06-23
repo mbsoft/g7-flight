@@ -42,10 +42,11 @@ var arrFuture = function(row) {
     var cleaned = [];
     travelers.forEach(function(itm) {
        if (itm.pickupday == row.pickupday) {        
-            if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
                 cleaned.push(itm);
-            else if (itm.initialdueridetimestamp <= row.arrtime)
-                cleaned.push(itm);
+ //           if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
+  //              cleaned.push(itm);
+   //         else if (itm.initialdueridetimestamp <= row.arrtime)
+    //            cleaned.push(itm);
        }
     });
     return cleaned;
@@ -87,6 +88,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                  reqBody.g7pickupzone, reqBody.fromplace,
                  reqBody.typeofplace, 
                  reqBody.initialdueridetimestamp, row.ridestatus, reqBody.ridenumber]);
+                 
            } else {
                // changed flights so need to see if there's any need to 
                // continue doing travel checking on the saved flight
@@ -122,7 +124,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                     }
                });
            }
-           pg.end();
+           done();
            return res.json();   
         });
     });  
@@ -155,9 +157,10 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
          reqBody.g7pickupzone, reqBody.fromplace,
          reqBody.typeofplace, reqBody.initialdueridetimestamp,
          0, 'CREATED']);
+         
+         done();
     });
-    
-    pg.end();
+
     return res.json();
 });
 
@@ -168,33 +171,41 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
 apirouter.post('/v1/travelers/delete', function(req, res, err1) {
     var reqBody = req.body;
     
-    var client = new pg.Client(config.connectionString);
-    client.connect();
-
-    var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
-    query.on('row', function(row) {
+    pg.connect(config.connectionString, function(err, client, done) {
+        if (err) {
+            done();
+            console.log(err);
+            return res.status(500).json({ success: false, data: err});
+        }
+        var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
+        query.on('row', function(row) {
            //Found the order - see if we are currently checking the flight
            // and determine whether we need to continue
-           var clientdelete = new pg.Client(config.connectionString);
-           clientdelete.connect();
-           var delquery = clientdelete.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
-           delquery.on('row', function(rowcount) {
-               if (rowcount.count == 0) {
-                   console.log("Not found in travelchecking");
-                    // remove record from travelers table
-                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
-                    console.log("Deleted from travelers -" + reqBody.ridenumber);
-               } else if (rowcount.count == 1) {
-                    // if only 1 result, no need to continue monitoring
-                    clientdelete.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
-                    console.log("Deleted from travelchecking -" + row.travelid);
-                    clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
-                    console.log("Deleted from travelers -" + reqBody.ridenumber);
-               }
+           pg.connect(config.connectionString, function(err, clientdelete, done) {
+                var delquery = clientdelete.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
+                delquery.on('row', function(rowcount) {
+                    if (rowcount.count == 0) {
+                        console.log("Not found in travelchecking");
+                            // remove record from travelers table
+                            clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
+                            console.log("Deleted from travelers -" + reqBody.ridenumber);
+                    } else if (rowcount.count == 1) {
+                            // if only 1 result, no need to continue monitoring
+                            clientdelete.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
+                            console.log("Deleted from travelchecking -" + row.travelid);
+                            clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
+                            console.log("Deleted from travelers -" + reqBody.ridenumber);
+                    }
+                });
+                done();               
            });
-              
+       
+        });
+        query.on('end', function() {
+            done();
+            return res.json(); 
+        });
     });
-    pg.end();
     return res.json();
 });
 
