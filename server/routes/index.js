@@ -27,6 +27,10 @@ router.get('/travelboard', function(req, res, next) {
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'travelboard.html'));
 });
 
+router.get('/archives', function(req, res, next) {
+  res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index3.html'));
+});
+
 router.get('/viewTravelBoard', function(req, res, next) {
   res.sendFile(path.join(__dirname, '../', '../', 'client', 'views', 'index.html'));
 });

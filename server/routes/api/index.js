@@ -37,17 +37,20 @@ var arrUnique = function(arr) {
     return cleaned;
 };
 
+
 var arrFuture = function(row) {
     var travelers = row.travelers;
-    var cleaned = [];
+    var cleaned = row;
+    cleaned.travelers = [];
     travelers.forEach(function(itm) {
-       if (itm.pickupday == row.pickupday) {        
-                cleaned.push(itm);
- //           if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
-  //              cleaned.push(itm);
-   //         else if (itm.initialdueridetimestamp <= row.arrtime)
-    //            cleaned.push(itm);
-       }
+	
+	if (itm.g7pickupday == row.pickupday) {
+
+       if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
+        cleaned.travelers.push(itm);
+       else if (itm.initialdueridetimestamp <= row.arrtime)
+        cleaned.travelers.push(itm);
+	    }
     });
     return cleaned;
 };
@@ -275,9 +278,9 @@ apirouter.get('/v1/travelboard', function(req, res) {
         
         row.color = 'green';
 
-        if ((row.origarrtime - currentTime <= 15*60) && row.delay > 15)
+        if ((row.origarrtime - currentTime <= 30*60) && row.delay > 15)
             row.color = 'red';
-        else if ((row.origarrtime - currentTime > 15*60) && row.delay > 15)
+        else if ((row.origarrtime - currentTime <= 60*60) && row.delay > 15)
             row.color = 'orange';
         //if (row.checkiteration == 1 && row.delay > 15)
         //    row.color = 'orange';
