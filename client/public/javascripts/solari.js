@@ -120,7 +120,7 @@ function addSolariBoard(divSelector) {
             "<div id=\"departures\">" +
             "<header class=\"solari-board-header rounded\"> " +
             "<div class=\"clockContainer\">" +
-            "<div class=\"solari-board-icon\"><img src=../images/taxis_g7.png /></div>" +
+            "<div class=\"solari-board-icon\"><img src=../images/taxis_g7_V2.png /></div>" +
             "<ul class=\"clockList\">" +
             "<li id=\"hours\"></li>" +
             "<li id=\"point\">H</li>" +
