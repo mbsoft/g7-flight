@@ -48,7 +48,6 @@ var traincheck = {
   
   trainDoCheck: function(f, status) {
     console.log(Date.now().toLocaleString() + " API check");
-   // debugger;
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
     if (travid.length == 1) {
         travid.push(travid[0]);
@@ -99,7 +98,6 @@ var traincheck = {
                     var disrupts = fd.disruptions;
                     var stopFound = false;
                     for (var k=0; k < stops.length; k++) {
-                        //debugger;
                         if (results.length > 0 && stops[k].stop_point.name == results[0].internationalname) {
                             //found the stop, now get the arrival time
                             stopFound = true;
@@ -119,7 +117,6 @@ var traincheck = {
                                                 var disruptStops = disrupts[j].impacted_objects[0].impacted_stops;
                                                 for (var m=0; m < disruptStops.length; m++) {
                                                     if (disruptStops[m].stop_point.name == results[0].internationalname) {
-                                                        //debugger;
                                                         sUpdateArrive = moment().format('YYYY-MM-DD') + disruptStops[m].amended_arrival_time;
                                                         arrivalTime = parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
                                                         break;
@@ -167,12 +164,12 @@ var traincheck = {
                             }
                             break;
                         }
-                        if (stopFound === false) {
-                            //debugger;
-                            traincheck.trainError(travelid);
-                        }
+
                     } 
                 }
+                if (stopFound === false) {
+                    traincheck.trainError(travelid);
+                 }
               });
               done();
            });

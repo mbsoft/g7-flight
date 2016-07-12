@@ -15,6 +15,8 @@ var options = {
   method: 'GET'
 }
 
+var apiRowID = 0;
+
 var flightcheck = {
   init: function() {
     console.log('Started flight check...');
@@ -39,7 +41,17 @@ var flightcheck = {
                 done();
                 console.log(err);
             }
-            client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"')");
+            client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"') RETURNING id",
+            
+                function(err, result) {
+                    debugger;
+                if (err) {
+
+                }
+                else {
+                    apiRowID = result.rows[0].id;
+                }
+            });
             done();
         });     
   },
@@ -81,14 +93,14 @@ var flightcheck = {
         while ((fs = fd.flightStatuses[i++]) != null)
         {
             debugger;
-            if ((fs.arrivalAirportFsCode != 'LGA') && (fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG'))
+            if ((fs.arrivalAirportFsCode != 'LAX') && (fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG'))
                 continue;
             else {
                 break;
             }
         }
         
-        if (fs == null || (fs.arrivalAirportFsCode != 'LGA' && fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG')) {
+        if (fs == null || (fs.arrivalAirportFsCode != 'LAX' && fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG')) {
             flightcheck.flightStatsError(travelid);                       
         } else if (fs != null) {
 
@@ -104,7 +116,6 @@ var flightcheck = {
         var coder = jsonQuery('codes[Code='+from_airport+'].Name', {
             data: Airports
         });
-        debugger;
         from_airport = coder.value;
         if (from_airport == null) {
             from_airport = "UNK";
@@ -116,7 +127,6 @@ var flightcheck = {
         //debugger;
         // We have details on the scehduled arrival in the response
         if (otimes.estimatedGateArrival||otimes.scheduledGateArrival||otimes.estimatedRunwayArrival) {
-            debugger;
             if (checkstatus == 'ACTIVE') {
                 if (otimes.actualGateArrival) { // flight has arrived at gate.
                     client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
@@ -154,10 +164,11 @@ var flightcheck = {
             }
             else if (checkstatus == 'UNCHECKED') {  // getting an initial estimate of arrival and setup for another check 30 minutes prior to this estimate
                 if (otimes.estimatedGateArrival||otimes.scheduledGateArrival) {
+                    debugger;
                     client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1), initialtravelarrival=($2),nexttravelcheckdate=timestamp '" +
                         (otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal)+ "'  - interval '" + config.limitCheck + " minutes', checkiteration=1  WHERE travelid=($3)",
                         [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
-                        (otimes.scheduledGateArrival?otimes.scheduledGateArrival.dateLocal:otimes.publishedArrival.dateLocal), 
+                        (otimes.scheduledGateArrival?otimes.scheduledGateArrival.dateLocal:otimes.estimatedGateArrival.dateLocal), 
                         travelid]);      
                 } else if (otimes.estimatedRunwayArrival) {
                     client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1), initialtravelarrival=($2),nexttravelcheckdate=timestamp '" +
@@ -188,7 +199,15 @@ var flightcheck = {
                         
             }
         }
-        done();
+
+        if (fs.delays && otimes.estimatedGateArrival) {
+            client.query("UPDATE travelapi SET delay=($1), estimatedarrival=($2) WHERE id=($3)",
+                [fs.delays.arrivalGateDelayMinutes, otimes.estimatedGateArrival.dateLocal, apiRowID]);
+        } else if (otimes.estimatedGateArrival) {
+            client.query("UPDATE travelapi SET delay=0, estimatedarrival=($1) WHERE id=($2)",
+                [otimes.estimatedGateArrival.dateLocal, apiRowID]);
+        }
+        done(); 
         });
     }
     } else {  // Error response

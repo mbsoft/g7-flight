@@ -13,7 +13,7 @@ var flightcheck = require('./server/routes/flightcheck');
 var traveler2check = require('./server/routes/traveler2check');
 var traincheck = require('./server/routes/traincheck');
 
-var dailycleanup = require('./server/routes/cleanup');
+var cleanup = require('./server/routes/cleanup');
 
 var app = express();
 var env = process.env.G7TRAVEL_ENV;
