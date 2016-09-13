@@ -1,0 +1,9 @@
+- hosts: local
+  become: true
+
+  roles:
+    - williamyeh.nodejs
+    - platform
+
+  vars:
+    nodejs_version: 0.10

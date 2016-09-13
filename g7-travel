@@ -1,0 +1,76 @@
+#!/bin/bash
+. /etc/init.d/functions
+export PATH=/usr/local/bin:$PATH
+[ "$(whoami)" != "root" ] && echo "Must be root to run this script." && exit 1
+
+export work_path=/home/jwelch/g7-flight
+export log_path=/home/jwelch/g7-flight/logs
+export log_file="master-console.log"
+export G7TRAVEL_ENV=production
+#export log_path=/dev
+#export log_file="null"
+export bin_path=/bin
+config1="bin/www"
+
+exec="${bin_path}/forever"
+
+proc=""
+proc="$(su - root -l -c "/bin/forever list" | grep $config1 | awk '{print $7}')"
+
+
+start() {
+        if [ ! -x $exec ]
+        then
+                echo $exec not found
+                exit 5
+        fi
+
+        if [ ! -f ${work_path}/$config1 ]
+        then
+                echo $config not found
+                exit 6
+        fi
+
+                echo -n "Starting g7-travel: "
+
+                su - root -l -c "cd $work_path;export G7TRAVEL_ENV=production; $exec --sourceDir $work_path -l ${log_path}/$log_file -a start $config1"
+                retval=$?
+                if [ $retval -eq 0 ]
+                then
+                        echo_success
+                        echo
+                else
+                        echo_failure
+                        echo
+                fi
+                return $retval
+
+}
+
+stop() {
+        echo -n "Stopping g7-travel: "
+        su - root -l -c "/bin/forever --sourceDir $work_path stopall"
+        retval=$?
+        [ $retval -eq 0 ] && echo_success || echo_failure
+        echo
+        return $retval
+}
+
+# See how we were called.
+case "$1" in
+        start)
+                [ "$proc" = "" ] && $1 || exit 0
+                ;;
+        stop)
+                [ "$proc" = "" ] && exit 0 || $1
+                ;;
+        status)
+                su - root -l -c "/bin/forever list"
+                ;;
+        *)
+        echo "Usage: $0 {start|stop|status|restart}"
+
+        exit 2
+esac
+
+exit $?

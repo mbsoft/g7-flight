@@ -1,0 +1,10 @@
+[single-servers]
+localhost
+local-platform
+local-g7-platform
+
+[service-local-platform]
+local-platform
+
+[local:children]
+service-local-platform

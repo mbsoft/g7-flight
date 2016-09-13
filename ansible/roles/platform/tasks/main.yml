@@ -1,0 +1,63 @@
+- name: Install express
+  npm: name=express global=yes
+
+- name: Install gulp
+  npm: name=gulp global=yes
+
+- name: Install pg
+  npm: name=pg global=yes
+
+- name: Install body-parser
+  npm: name=body-parser global=yes
+
+- name: Install debug
+  npm: name=debug global=yes
+
+- name: Install jade
+  npm: name=jade global=yes
+
+- name: Install moment
+  npm: name=moment global=yes
+
+- name: Install morgan
+  npm: name=morgan global=yes
+
+- name: Install serve-favicon
+  npm: name=serve-favicon global=yes
+
+- name: Install path
+  npm: name=path global=yes
+
+- name: Install https
+  npm: name=https global=yes
+
+- name: Install json-query
+  npm: name=json-query global=yes
+
+- name: Copy g7-travel distribution
+  synchronize:
+    src: /Users/jwelch/workspace/g7-flight/
+    dest: /home/vagrant/g7-flight
+    rsync_opts:
+      - "--no-motd"
+      - "--exclude=.git"
+      - "--exclude=ansible"
+      - "--exclude=Vagrantfile"
+      - "--exclude=README.md"
+      - "--exclude=nouvel_ui.sql"
+      - "--exclude=functions"
+      - "--exclude=g7-travel"
+
+- name: setup local debug configuration
+  tags: [simple_deploy]
+  template: src=localdebug.js dest=/home/{{ ansible_ssh_user }}/g7-flight/local_settings.js mode=644 owner={{ ansible_ssh_user }}
+
+- name: Copy init script g7-travel
+  synchronize:
+    src: /Users/jwelch/workspace/g7-flight/functions
+    dest: /etc/init.d
+
+- name: Copy init script g7-travel (part2)
+  synchronize:
+    src: /Users/jwelch/workspace/g7-flight/g7-travel
+    dest: /etc/init.d
