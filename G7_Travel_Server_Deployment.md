@@ -1,5 +1,37 @@
 # G7 Travel Server Deployment
 
+## Deploy from local machine to remote server that will run G7 Travel services
+
+### Requirements
+
+ansible <a>https://www.ansible.com/</a>
+
+--
+clone g7-flight repository from github<br>``` $ git clone https://github.com/mbsoft/g7-flight.git ```
+
+-- 
+go to g7-flight subdirectory and verify ansible file configuration settings. 
+
+```
+{ path }/ansible/hosts   # add name of host you are deploying to
+{ path }/deploy-jws-test1-platform.yml   # modify hostname to name of host you are deploying to
+{ path }/ansible.cfg  # add your SSH public key to this file that you would use to connect to remote server
+```
+
+--
+On your local machine (not the vagrant box) run the Ansible Galaxy prerequisite role install (these are some predefined Ansible roles to handle common tasks). In this case, we are using a predefined Ansible role that will manage the node.js build for us.
+
+```
+sudo ansible-galaxy install williamyeh.nodejs
+```
+--
+Run the ansible deployment from command line
+
+```
+ansible-playbook -K -vvv -i ansible/hosts/platform ansible/deploy-jws-test1-platform.yml
+```
+Note: this -K parameter is added so you are prompted to enter 'sudo' password which will be requireed for installation.
+
 ## Test setup using Vagrant and VirtualBox
 
 ### Requirements
@@ -10,10 +42,10 @@ virtualbox VM <a>https://www.virtualbox.org</a>
 ansible <a>https://www.ansible.com/</a>
 
 
--- 
+--
 clone g7-flight repository from github<br>``` $ git clone https://github.com/mbsoft/g7-flight.git ```
 
--- 
+--
 go to g7-flight subdirectory and verify Vagrant configuration file settings. Note that in this configuration file we have declared a CentOS 7 environment and a hostname local-platform. This will create a virtualbox environment that we can connect to locally.  
 
 ```
@@ -53,7 +85,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 10000 ]
     end
   end
-end 
+end
 ```
 --
 Start the vagrant box locally
@@ -137,4 +169,3 @@ skipping: [local-platform] => {"changed": false, "skip_reason": "Conditional che
 TASK [williamyeh.nodejs : set nodejs_version, if neither version variables are defined] ***
 skipping: [local-platform] => {"changed": false, "skip_reason": "Conditional check failed", "skipped": true}
 ```
-
