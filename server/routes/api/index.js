@@ -37,20 +37,15 @@ var arrUnique = function(arr) {
     return cleaned;
 };
 
-
-var arrFuture = function(row) {
-    var travelers = row.travelers;
-    var cleaned = row;
-    cleaned.travelers = [];
-    travelers.forEach(function(itm) {
-	
-	if (itm.g7pickupday == row.pickupday) {
-
-       if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
-        cleaned.travelers.push(itm);
-       else if (itm.initialdueridetimestamp <= row.arrtime)
-        cleaned.travelers.push(itm);
-	    }
+var arrFuture = function(arr, row) {
+    var cleaned = [];
+    arr.forEach(function(itm) {
+        if (itm.pickupday == row.pickupday) {
+            if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
+                cleaned.push(itm);
+            else if (itm.initialdueridetimestamp <= row.arrtime)
+                cleaned.push(itm);
+        }
     });
     return cleaned;
 };
@@ -289,7 +284,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
             
         if (row.status != 'TRAVELID_ERROR' && row.status != 'TERMINATED' && row.delay > 15 && row.arrtime > (currentTime + 5*60)) {    
             row.travelers = arrUnique(row.travelers);
-            row.travelers = arrFuture(row);
+            row.travelers = arrFuture(row.travelers, row);
             if (row.travelers.length > 0) {
                 row.nbrtravelers = row.travelers.length;
                 results.push(row);

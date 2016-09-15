@@ -16,11 +16,13 @@ var options = {
   method: 'GET'
 }
 
+var apiRowID = 0;
+
 var traincheck = {
   init: function() {
     console.log('Started train check...');
     config.init();
-    setInterval(this.expirator.bind(this), 5000); //check for flights to check every 15 seconds - NOT checking the API every 15 seconds
+    setInterval(this.expirator.bind(this), 25000); //check for flights to check every 15 seconds - NOT checking the API every 15 seconds
   },
   
   trainError: function(travelid) {
@@ -41,7 +43,15 @@ var traincheck = {
                 done();
                 console.log(err);
             }
-            client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"')");
+            client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"') RETURNING id",
+                function(err, result) {
+		    debugger;
+                    if (err) {
+
+                    } else {
+                        apiRowID = result.rows[0].id;
+                    }
+                });
             done();
         });     
   },
@@ -60,7 +70,11 @@ var traincheck = {
     var results = [];
     options.path = config.trainPath + '?headsign=' + travid[0].trim().toUpperCase() +datestring;
     
+    // Log the check in the API call table
+    traincheck.trainLogApi(f, options.path);
+    
     //var auth = 'Basic ' + new Buffer(config.trainUserKey + ':' + '').toString('base64');
+      debugger;
     var req = https.request(options, function(res,options) {
         var body = '';
         res.on('data', function(d){
@@ -68,10 +82,13 @@ var traincheck = {
         });
         
         res.on('end', function(e){
+	    debugger;
            var fd;
            try {
             fd = JSON.parse(body);
            } catch (err) {
+	       console.log(err);
+	       logger.info(err);
                traincheck.trainError(travelid);
            }
            if (fd.error == null) {
@@ -92,11 +109,13 @@ var traincheck = {
               });
               query.on('end', function() {
                 if (fd.error != null) {
+                    debugger;
                     traincheck.trainError(travelid);
                 } else {
                     var stops = fd.vehicle_journeys[0].stop_times;
                     var disrupts = fd.disruptions;
                     var stopFound = false;
+                    debugger;
                     for (var k=0; k < stops.length; k++) {
                         if (results.length > 0 && stops[k].stop_point.name == results[0].internationalname) {
                             //found the stop, now get the arrival time
@@ -105,6 +124,7 @@ var traincheck = {
                             var sUpdateArrive = sArrive;
                             var arrivalTime = parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
                             if (checkstatus == 'UNCHECKED') {  //initial API check 
+                                debugger;
                                 if (disrupts.length) {
                                     //...check validity
                                     for (var j=0; j < disrupts.length; j++) {
@@ -161,6 +181,11 @@ var traincheck = {
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=99 " +
                                     " WHERE travelid=($4)",
                                     [sArrive, sUpdateArrive, sArrive, travelid]);
+                                    
+                                var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) - 
+                                                parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
+                                client.query("UPDATE travelapi SET delay=($1), estimatedarrival=($2) where id=($3)",
+                                    [calcDelay, sUpdateArrive, apiRowID])
                             }
                             break;
                         }
@@ -168,6 +193,7 @@ var traincheck = {
                     } 
                 }
                 if (stopFound === false) {
+                    debugger;
                     traincheck.trainError(travelid);
                  }
               });
@@ -194,8 +220,7 @@ var traincheck = {
             done();
         });
     });
-    // Log the check in the API call table
-    traincheck.trainLogApi(f, options.path);
+
 
   },
   

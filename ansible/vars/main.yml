@@ -1,0 +1,5 @@
+nodejs_npm_global_packages:
+  - name: express
+  - name: pg
+  - name: gulp
+  

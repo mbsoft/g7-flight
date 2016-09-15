@@ -9,6 +9,7 @@ var https = require('https');
 var jsonQuery = require('json-query');
 var airports = require('../../server/classes/airport');
 var moment = require('moment');
+var logger = require(path.join(__dirname, '../', 'classes','logging')).logger;
 
 var options = {
   host: 'api.flightstats.com',
@@ -39,12 +40,13 @@ var flightcheck = {
         pg.connect(config.connectionString, function(err, client, done) {
             if (err) {
                 done();
+		logger.info(err);
                 console.log(err);
             }
             client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"') RETURNING id",
             
                 function(err, result) {
-                    debugger;
+
                 if (err) {
 
                 }
@@ -58,6 +60,7 @@ var flightcheck = {
   
   flightStatsDoCheck: function(f, status) {
     console.log(Date.now().toLocaleString() + " API check");
+      logger.info("API check");
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
     if (travid.length == 1) {
         travid.push(travid[0]);
@@ -92,7 +95,7 @@ var flightcheck = {
         var i=0;
         while ((fs = fd.flightStatuses[i++]) != null)
         {
-            debugger;
+
             if ((fs.arrivalAirportFsCode != 'LAX') && (fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG'))
                 continue;
             else {
@@ -108,6 +111,7 @@ var flightcheck = {
         pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
             done();
+	    logger.info(err);
             console.log(err);
         }
 
@@ -124,7 +128,7 @@ var flightcheck = {
             from_airport = from_airport.substring(0,30);
         }
         
-        //debugger;
+
         // We have details on the scehduled arrival in the response
         if (otimes.estimatedGateArrival||otimes.scheduledGateArrival||otimes.estimatedRunwayArrival) {
             if (checkstatus == 'ACTIVE') {
@@ -164,7 +168,7 @@ var flightcheck = {
             }
             else if (checkstatus == 'UNCHECKED') {  // getting an initial estimate of arrival and setup for another check 30 minutes prior to this estimate
                 if (otimes.estimatedGateArrival||otimes.scheduledGateArrival) {
-                    debugger;
+
                     client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1), initialtravelarrival=($2),nexttravelcheckdate=timestamp '" +
                         (otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal)+ "'  - interval '" + config.limitCheck + " minutes', checkiteration=1  WHERE travelid=($3)",
                         [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
@@ -182,7 +186,7 @@ var flightcheck = {
         }
         // We have some other details that allow us to estimate arrival
         else if (otimes.estimatedRunwayArrival || otimes.actualRunwayArrival) {
-            debugger;
+
             if (checkstatus == 'UNCHECKED') {
                 if (otimes.actualRunwayArrival != null)
                 client.query("UPDATE travelchecking SET status='TERMINATED',initialtravelarrival=($1),currentestimatetravelarrival=($2) WHERE travelid=($3)",
@@ -206,12 +210,15 @@ var flightcheck = {
         } else if (otimes.estimatedGateArrival) {
             client.query("UPDATE travelapi SET delay=0, estimatedarrival=($1) WHERE id=($2)",
                 [otimes.estimatedGateArrival.dateLocal, apiRowID]);
+        } else if (otimes.scheduledGateArrival) {
+             client.query("UPDATE travelapi SET delay=0, estimatedarrival=($1) WHERE id=($2)",
+                [otimes.scheduledGateArrival.dateLocal, apiRowID]);           
         }
         done(); 
         });
     }
     } else {  // Error response
-        debugger;
+
         // query PG and update
         pg.connect(config.connectionString, function(err, client, done) {
             if (err) {
