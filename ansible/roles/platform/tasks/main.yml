@@ -37,7 +37,7 @@
 - name: Copy g7-travel distribution
   synchronize:
     src: /Users/jwelch/workspace/g7-flight/
-    dest: /home/vagrant/g7-flight
+    dest: /home/{{ ansible_ssh_user }}/g7-flight
     rsync_opts:
       - "--no-motd"
       - "--exclude=.git"

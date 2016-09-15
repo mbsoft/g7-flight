@@ -1,4 +1,4 @@
-- hosts: local
+- hosts: 107.21.8.254
   become: true
 
   roles:

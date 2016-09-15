@@ -3,6 +3,7 @@ localhost
 local-platform
 local-g7-platform
 jws-test1
+107.21.8.254
 
 [service-local-platform]
 local-platform
