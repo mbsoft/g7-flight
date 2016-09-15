@@ -14,12 +14,14 @@ var travel2check = {
   },
   expirator: function() {
     console.log('Querying travelers to move to travelchecking table');
-    logger.info('Queryingtravelers to move to travelchecking table');
+    logger.info('Querying travelers to move to travelchecking table');
     var results = [];
+
     pg.connect(config.connectionString, function(err, client, done) {
       if (err) {
         done();
         console.log(err);
+	logger.info(err);
       }
       // Get rows in the travelers table that aren't represented in the travelchecking table
       var query = client.query("SELECT DISTINCT travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
@@ -31,6 +33,7 @@ var travel2check = {
       });
       query.on('end', function() {
         done();
+        console.log('Rows retrieved: ' + results.length);
         if (results) {
           // Check whether it is time to insert the row for travelchecking
 
@@ -38,24 +41,28 @@ var travel2check = {
           
           results.forEach(function(f){
             // transfer orders that are coming due in the next hour
-            
             if ((f.initialdueridetimestamp - (60+5)*60 <= timeNow) &&
                 (f.initialdueridetimestamp - timeNow > 0)) {
                 console.log(f.travelid + ' ' + f.initialdueridetimestamp + ' ' + f.internationalcode);
+		logger.info(f.travelid + ' ' + f.initialdueridetimestamp + ' ' + f.internationalcode);
                 pg.connect(config.connectionString, function(err, client, done) {
                 if (err) {
                     done();
                     console.log(err);
+		    logger.info(err);
                 }
-                client.query("INSERT INTO travelchecking VALUES (" +
-                    "DEFAULT,'UNCHECKED','" + f.travelid + "','" + f.pickupday + "','" +
-                    f.fromplace.toUpperCase() + "','" + f.internationalcode + "','" + f.typeofplace + "',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "'," +
-                    "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "',NULL,0)");
+          //      if (!config.debug) {
+                  client.query("INSERT INTO travelchecking VALUES (" +
+                      "DEFAULT,'UNCHECKED','" + f.travelid + "','" + f.pickupday + "','" +
+                      f.fromplace.toUpperCase() + "','" + f.internationalcode + "','" + f.typeofplace + "',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "'," +
+                      "to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "',NULL,0)");
+           //     }
                 done();
                 });
             }
           });
         } else {
+	  logger.info("No rows to add");
           console.log("No rows to add");
         }
       });

@@ -32,12 +32,15 @@ app.use('/', routes);
 app.use('/api', apiroutes);
 app.use('/test', testroutes);
 
+config.init();
 // Allows us to run g7-flight as just a client service for the travelboard
-if (!config.debug) {
+debugger;
+//if (!config.debug) {
   traveler2check.init();
   flightcheck.init();
   traincheck.init();
-}
+//}
+//traveler2check.init();
 cleanup.init();
 
 // catch 404 and forward to error handler
