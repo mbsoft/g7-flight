@@ -31,7 +31,6 @@ var traincheck = {
         done();
         console.log(err);
         }
-        debugger;
         client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
         done();
     });
@@ -45,7 +44,6 @@ var traincheck = {
             }
             client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"') RETURNING id",
                 function(err, result) {
-		    debugger;
                     if (err) {
 
                     } else {
@@ -81,7 +79,6 @@ var traincheck = {
         });
 
         res.on('end', function(e){
-	    debugger;
            var fd;
            try {
             fd = JSON.parse(body);
@@ -108,7 +105,6 @@ var traincheck = {
               });
               query.on('end', function() {
                 if (fd.error != null) {
-                    debugger;
                     traincheck.trainError(travelid);
                 } else {
                     var stops = fd.vehicle_journeys[0].stop_times;
@@ -202,7 +198,6 @@ var traincheck = {
                     }
                 }
                 if (stopFound === false) {
-                    debugger;
                     traincheck.trainError(travelid);
                  }
               });
@@ -212,7 +207,6 @@ var traincheck = {
         });
 
         res.on('error', function(e){
-            debugger;
             console.log(e.message);
         });
 
