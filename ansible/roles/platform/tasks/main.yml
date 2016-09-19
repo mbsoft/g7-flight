@@ -1,3 +1,6 @@
+- name: Install forever
+  npm: name=forever global=yes
+  
 - name: Install express
   npm: name=express global=yes
 
