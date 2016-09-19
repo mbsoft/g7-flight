@@ -8,5 +8,14 @@ jws-test1
 [service-local-platform]
 local-platform
 
+[service-ec2-platform]
+107.23.250.251
+
+[service-production-platform]
+checkt-preprod1
+
+[service-staging-platform]
+jws-test1
+
 [local:children]
 service-local-platform

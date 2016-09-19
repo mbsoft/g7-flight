@@ -24,10 +24,10 @@ var travel2check = {
 	logger.info(err);
       }
       // Get rows in the travelers table that aren't represented in the travelchecking table
-      var query = client.query("SELECT DISTINCT travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
+      var query = client.query("SELECT DISTINCT t.processed, travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
           "FROM travelers t, travelplaces tp WHERE NOT EXISTS(" +
           "SELECT 1 FROM travelchecking tc " +
-          "WHERE t.travelid=tc.travelid) and t.g7pickupzone=tp.g7pickupzone");
+          "WHERE t.travelid=tc.travelid) and t.g7pickupzone=tp.g7pickupzone and t.processed != true");
       query.on('row', function(row) {
         results.push(row);
       });
@@ -38,8 +38,9 @@ var travel2check = {
           // Check whether it is time to insert the row for travelchecking
 
           var timeNow = Math.floor(Date.now()/1000);
-          
+
           results.forEach(function(f){
+
             // transfer orders that are coming due in the next hour
             if ((f.initialdueridetimestamp - (60+5)*60 <= timeNow) &&
                 (f.initialdueridetimestamp - timeNow > 0)) {

@@ -1,42 +1,3 @@
-- name: Install forever
-  npm: name=forever global=yes
-  
-- name: Install express
-  npm: name=express global=yes
-
-- name: Install gulp
-  npm: name=gulp global=yes
-
-- name: Install pg
-  npm: name=pg global=yes
-
-- name: Install body-parser
-  npm: name=body-parser global=yes
-
-- name: Install debug
-  npm: name=debug global=yes
-
-- name: Install jade
-  npm: name=jade global=yes
-
-- name: Install moment
-  npm: name=moment global=yes
-
-- name: Install morgan
-  npm: name=morgan global=yes
-
-- name: Install serve-favicon
-  npm: name=serve-favicon global=yes
-
-- name: Install path
-  npm: name=path global=yes
-
-- name: Install https
-  npm: name=https global=yes
-
-- name: Install json-query
-  npm: name=json-query global=yes
-
 - name: Copy g7-travel distribution
   synchronize:
     src: /Users/jwelch/workspace/g7-flight/
@@ -64,3 +25,9 @@
   synchronize:
     src: /Users/jwelch/workspace/g7-flight/g7-travel
     dest: /etc/init.d
+
+- name: Stop G7 Travel service
+  service: name=g7-travel state=stopped
+
+- name: Start G7 Travel service
+  service: name=g7-travel state=started
