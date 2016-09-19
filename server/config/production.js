@@ -1,7 +1,7 @@
 var pg = require('pg');
 
 var Config = {
-  connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
+  connectionString : 'postgres://checktpp:91mwMc@psql-dev1/checkt',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
   trainPath: '/v1/coverage/sncf/vehicle_journeys',
@@ -18,13 +18,13 @@ var Config = {
   //Logging
   logDirectory: './logs',
   logLevel: 'debug',
-  
+
   // Listen port
   port: '80',
-  
+
   //Development
   debug: false,
-  
+
   // DB Params
   firstCheck: 0,
   secondCheck: 0,
@@ -36,7 +36,7 @@ var Config = {
   secondCheckTrain: 0,
   estimateDelayTrain: 0,
   apiTimeoutTrain: 0,
-  
+
   init: function() {
     console.log('DB init of params');
     pg.connect(Config.connectionString, function(err, client, done) {
@@ -45,7 +45,7 @@ var Config = {
             console.log(err);
         }
         var query = client.query("SELECT DISTINCT * FROM travelparams");
- 
+
         query.on('row', function(row) {
             Config.firstCheck = row.initialcheckflight;
             Config.secondCheck = row.limitcheckflight;
@@ -61,11 +61,10 @@ var Config = {
         query.on('end', function() {
         done();
         return;
-        });       
+        });
     });
   }
 }
 
 
 module.exports = Config;
-
