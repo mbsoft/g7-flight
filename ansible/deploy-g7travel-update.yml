@@ -2,8 +2,7 @@
   become: true
 
   roles:
-    - williamyeh.nodejs
-    - platform
+    - g7travel-update
 
   vars:
     ansible_distribution_major_version: 7

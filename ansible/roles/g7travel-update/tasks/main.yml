@@ -1,0 +1,33 @@
+- name: Copy g7-travel distribution
+  synchronize:
+    src: /Users/jwelch/workspace/g7-flight/
+    dest: /home/{{ ansible_ssh_user }}/g7-flight
+    rsync_opts:
+      - "--no-motd"
+      - "--exclude=.git"
+      - "--exclude=ansible"
+      - "--exclude=Vagrantfile"
+      - "--exclude=README.md"
+      - "--exclude=nouvel_ui.sql"
+      - "--exclude=functions"
+      - "--exclude=g7-travel"
+
+- name: setup local debug configuration
+  tags: [simple_deploy]
+  template: src=localdebug.js dest=/home/{{ ansible_ssh_user }}/g7-flight/local_settings.js mode=644 owner={{ ansible_ssh_user }}
+
+- name: Copy init script g7-travel
+  synchronize:
+    src: /Users/jwelch/workspace/g7-flight/functions
+    dest: /etc/init.d
+
+- name: Copy init script g7-travel (part2)
+  synchronize:
+    src: /Users/jwelch/workspace/g7-flight/g7-travel
+    dest: /etc/init.d
+
+- name: Stop G7 Travel service
+  service: name=g7-travel state=stopped
+
+- name: Start G7 Travel service
+  service: name=g7-travel state=started

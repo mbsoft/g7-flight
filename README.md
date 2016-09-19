@@ -25,7 +25,7 @@ Production stop (on jws-test1 server):
 GET
 [http://jws-test1/api/v1/travelboard](http://jws-test1/api/v1/travelboard)
 
-Returns JSON array of flights being actively checked for status. Each flight contains an array of 
+Returns JSON array of flights being actively checked for status. Each flight contains an array of
 travelers who are on the flight and have requested a taxi
 ```
 [
@@ -116,7 +116,7 @@ Returns JSON array of travelers-order in TaxiPak that require pickup at airport 
 ]
 ```
 ---
-### Add a traveler record 
+### Add a traveler record
 #### (gets called when a customer orders a taxi with a destination at an airport or train station)
 POST
 [http://jws-test1/api/travelers/add](http://jws-test1/api/travelers)
@@ -179,10 +179,10 @@ Body contains
 ### Clear database tables for testing
 [http://jws-test1/test/clear](http://jws-test1/test/clear)
 
-### Populate database tables with data for testing 
+### Populate database tables with data for testing
 [http://jws-test1/test/harness/2016/01/16/22/CDG](http://jws-test1/test/harness/2016/01/16/22/CDG)
 
-where: 
+where:
 ```
     /{YYYY}/{MM}/{DD}/{HH}/{IATA_AIRPORT_CODE}  
  ```

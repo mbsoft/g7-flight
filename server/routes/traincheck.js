@@ -24,7 +24,7 @@ var traincheck = {
     config.init();
     setInterval(this.expirator.bind(this), 25000); //check for flights to check every 15 seconds - NOT checking the API every 15 seconds
   },
-  
+
   trainError: function(travelid) {
     pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
@@ -34,9 +34,9 @@ var traincheck = {
         debugger;
         client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
         done();
-    });       
+    });
   },
-  
+
   trainLogApi: function(f, call) {
         pg.connect(config.connectionString, function(err, client, done) {
             if (err) {
@@ -53,9 +53,9 @@ var traincheck = {
                     }
                 });
             done();
-        });     
+        });
   },
-  
+
   trainDoCheck: function(f, status) {
     console.log(Date.now().toLocaleString() + " API check");
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
@@ -69,18 +69,17 @@ var traincheck = {
     var datestring = '&since='+moment().format('YYYYMMDD')+'T000100'+'&until='+moment().format('YYYYMMDD')+'T235900';
     var results = [];
     options.path = config.trainPath + '?headsign=' + travid[0].trim().toUpperCase() +datestring;
-    
+
     // Log the check in the API call table
     traincheck.trainLogApi(f, options.path);
-    
+
     //var auth = 'Basic ' + new Buffer(config.trainUserKey + ':' + '').toString('base64');
-      debugger;
     var req = https.request(options, function(res,options) {
         var body = '';
         res.on('data', function(d){
             body += d;
         });
-        
+
         res.on('end', function(e){
 	    debugger;
            var fd;
@@ -102,7 +101,7 @@ var traincheck = {
               if (err) {
                   done();
                   console.log(err);
-              } 
+              }
               var query = client.query("SELECT * FROM travelplaces WHERE g7pickupzone=($1)", [station]);
               query.on('row', function(row) {
                   results.push(row);
@@ -115,7 +114,7 @@ var traincheck = {
                     var stops = fd.vehicle_journeys[0].stop_times;
                     var disrupts = fd.disruptions;
                     var stopFound = false;
-                    debugger;
+
                     for (var k=0; k < stops.length; k++) {
                         if (results.length > 0 && stops[k].stop_point.name == results[0].internationalname) {
                             //found the stop, now get the arrival time
@@ -123,14 +122,14 @@ var traincheck = {
                             var sArrive = moment().format('YYYY-MM-DD') + stops[k].arrival_time;
                             var sUpdateArrive = sArrive;
                             var arrivalTime = parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
-                            if (checkstatus == 'UNCHECKED') {  //initial API check 
-                                debugger;
+                            if (checkstatus == 'UNCHECKED') {  //initial API check
+
                                 if (disrupts.length) {
                                     //...check validity
                                     for (var j=0; j < disrupts.length; j++) {
                                         var period1 = parseInt(moment(disrupts[j].application_periods[0].end,'YYYYMMDD\THHmmss').format('X'));
                                         var period2 = parseInt(moment().format('X'));
-                                        if (period1-period2-3600 > 0 && (period1-period2 <86400)) {
+                                        if (period1-period2 > 0 && (period1-period2 <86400)) {
                                             console.log('Found disruption...' + disrupts[j].application_periods[0]);
                                             // check if our stop is affected
                                             if (disrupts[j].impacted_objects.length) {
@@ -144,14 +143,22 @@ var traincheck = {
                                                 }
                                             }
                                             break;
-                                        } 
+                                        }
                                     }
                                 }
-                                var query2 = client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " + 
-                                    " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," + 
+
+                                var query2 = client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " +
+                                    " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," +
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=1 " +
                                     " WHERE travelid=($4)",
                                     [sArrive, sUpdateArrive, sArrive, travelid]);
+
+                                var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) -
+                                                    parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
+
+                                client.query("UPDATE travelapi SET delay=($1), estimatedarrival=to_timestamp($2, 'YYYY-MM-DDHH24MISS') where id=($3)",
+                                    [calcDelay, sUpdateArrive, apiRowID])
+
                             } else if (checkstatus == 'ACTIVE') {  //second API check
                                 if (disrupts.length) {
                                     //...check validity
@@ -173,24 +180,26 @@ var traincheck = {
                                                 }
                                             }
                                             break;
-                                        } 
+                                        }
                                     }
                                 }
-                                var query2 = client.query("UPDATE travelchecking SET status='TERMINATED',initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " + 
-                                    " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," + 
+
+                                var query2 = client.query("UPDATE travelchecking SET initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " +
+                                    " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," +
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=99 " +
                                     " WHERE travelid=($4)",
                                     [sArrive, sUpdateArrive, sArrive, travelid]);
-                                    
-                                var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) - 
+
+                                var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) -
                                                 parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
-                                client.query("UPDATE travelapi SET delay=($1), estimatedarrival=($2) where id=($3)",
+
+                                client.query("UPDATE travelapi SET delay=($1), estimatedarrival=to_timestamp($2, 'YYYY-MM-DDHH24MISS') where id=($3)",
                                     [calcDelay, sUpdateArrive, apiRowID])
                             }
                             break;
                         }
 
-                    } 
+                    }
                 }
                 if (stopFound === false) {
                     debugger;
@@ -201,14 +210,14 @@ var traincheck = {
            });
            console.log(travelid + ' ' + station + ' ' + checkstatus);
         });
-        
+
         res.on('error', function(e){
             debugger;
             console.log(e.message);
         });
 
-    }.bind({travelid:travelid,checkstatus:checkstatus,station:station})); 
-    
+    }.bind({travelid:travelid,checkstatus:checkstatus,station:station}));
+
     req.end();
     req.on('error', function(err){
         pg.connect(config.connectionString, function(err, client, done) {
@@ -223,7 +232,7 @@ var traincheck = {
 
 
   },
-  
+
   expirator: function() {
     console.log('Checking trains...');
     var results = [];
@@ -246,7 +255,7 @@ var traincheck = {
             // check criteria for making Flight Stats API call - always make when INITIAL
             var time2arrival = Math.floor(f.initialtravelarrival/1000) - Math.floor(Date.now() / 1000);
             var check2arrival = 0;
-            if (f.currentestimatetravelarrival > 0) 
+            if (f.currentestimatetravelarrival > 0)
                 check2arrival = Math.floor(f.currentestimatetravelarrival/1000) - Math.floor(Date.now()/1000);
             else
                 check2arrival = Math.floor(f.initialtravelarrival/1000) - Math.floor(Date.now()/1000);
@@ -274,7 +283,7 @@ var traincheck = {
                             console.log(new Date().toLocaleString() + " Second API check - " + travelid);
                             f.station = f.internationalcode;
                             traincheck.trainDoCheck(f, checkstatus);
-                        } 
+                        }
                         break;
                     case 'CHECKED':
                     break;

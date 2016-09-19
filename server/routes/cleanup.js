@@ -16,13 +16,15 @@ var cleanup = {
         console.log(err);
       }
       var timeNow = Math.floor(Date.now()/1000);
-      console.log("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)");
-      client.query("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)")
+
+      console.log("UPDATE travelers set processed=true where initialdueridetimestamp < (" + timeNow + "-86400)");
+      client.query("UPDATE travelers set processed=true where initialdueridetimestamp < (" + timeNow + "-86400)");
+      //client.query("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)")
       done();
-     });      
+     });
     setInterval(this.expirator.bind(this), 3600 * 1000); //hourly table cleanup
   },
-  
+
   expirator: function() {
      console.log('Running daily cleanup...');
 
@@ -32,8 +34,9 @@ var cleanup = {
         console.log(err);
       }
       var timeNow = Math.floor(Date.now()/1000);
-      console.log("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)");
-      client.query("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)")
+      console.log("UPDATE travelers set processed=true where initialdueridetimestamp < (" + timeNow + "-86400)");
+      //client.query("DELETE FROM travelers where initialdueridetimestamp < (" + timeNow + "-86400)")
+      client.query("UPDATE travelers set processed=true where initialdueridetimestamp < (" + timeNow + "-86400)");
       done();
      });
   }
