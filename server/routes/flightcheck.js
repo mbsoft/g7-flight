@@ -230,6 +230,7 @@ var flightcheck = {
                 console.log(err);
             }
             client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where id=($1)", [uniqueID]);
+            done();
         });
     }
     });
