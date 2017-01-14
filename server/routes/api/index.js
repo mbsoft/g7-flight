@@ -5,6 +5,7 @@ var apirouter = express();
 var pg = require('pg');
 var path = require('path');
 var env = process.env.G7TRAVEL_ENV;
+var moment = require('moment');
 var connectionString = require(path.join(__dirname,  '../','../', 'config/'+env+'.js'));
 var config = require(path.join(__dirname, '../','..', 'config/'+env+'.js'));
 var https = require('https');
@@ -12,17 +13,14 @@ var util = require('util');
 var jsonQuery = require('json-query');
 var airports = require('../../../server/classes/airport');
 var randomstring = require('randomstring');
+var logger = require(path.join(__dirname, '../..', 'classes','logging')).logger;
 
 var options = {
   host: 'api.flightstats.com',
   method: 'GET'
 }
 
-var G7Router = function(routeType) {
-    return function(req, res) {
-        (new routeType()).route(req, res);
-    };
-};
+
 
 var arrUnique = function(arr) {
     //deal with some duplicate results
@@ -41,18 +39,42 @@ var arrFuture = function(arr, row) {
     var cleaned = [];
     arr.forEach(function(itm) {
         if (itm.pickupday == row.pickupday) {
-            if (itm.lastdueridetimestamp > 0 && itm.lastdueridetimestamp <= row.arrtime)
+
+            if (itm.lastdueridetimestamp > 0 && (Math.abs(itm.lastdueridetimestamp - row.arrtime)) > 60)
                 cleaned.push(itm);
-            else if (itm.initialdueridetimestamp <= row.arrtime)
+            else if (itm.initialdueridetimestamp < row.arrtime && itm.lastdueridetimestamp == 0)
                 cleaned.push(itm);
         }
     });
     return cleaned;
 };
 
+// GET - heartbeat
+apirouter.get('/v1/heartbeat', function(req, res) {
+  logger.info('/v1/heartbeat request');
+  var results = [];
+  pg.connect(config.connectionString, function(err, client, done) {
+    if (err) {
+      done();
+      console.log(err);
+      return res.status(500).json({ success: false, data: err});
+    }
+
+    var query = client.query("SELECT * FROM travelers ORDER BY initialdueridetimestamp");
+      query.on('row', function(row) {
+      results.push(row);
+    });
+    query.on('end', function() {
+      done();
+      return res.json(results);
+    });
+  });
+});
+
 // POST - update a traveler record
 apirouter.post('/v1/travelers/update', function(req, res, err1) {
 
+    logger.info('/v1/travelers/update request ' + req.body);
     var reqBody = req.body;
 
     // validate the travel ID parameter
@@ -61,12 +83,14 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
     if (travelid.length < 3)
         return res.json();
     var strLen = travelid.length;
+    travelid = travelid.replace(/\s/g, "");
     // No need to store travelid's with non-ASCII chars?
     for (var i = 0, strLen = travelid.length; i < strLen; ++i) {
         if (travelid.charCodeAt(i) > 127)
             return res.json();
     }
 
+    travelid = travelid.replace(/\s/g, "");
     pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
             console.log(err);
@@ -74,13 +98,13 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
         var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
         query.on('row', function(row) {
            // record exists...update it
-           if (row.travelid == reqBody.travelid) {
+           if (row.travelid == travelid) {
                // no change in travelid so just udpate traveler record
                var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
                 "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
                 "fromplace=($7),typeofplace=($8),lastdueridetimestamp=($9)," +
                 "ridestatus=($10) WHERE ridenumber=($11)",
-                [reqBody.travelid,
+                [travelid,
                  reqBody.pickupday, reqBody.subscriptioncode,
                  reqBody.refclient, reqBody.requestedby,
                  reqBody.g7pickupzone, reqBody.fromplace,
@@ -92,6 +116,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                // continue doing travel checking on the saved flight
                var rowquery = client.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
                rowquery.on('row', function(rowcount) {
+                   debugger;
                    if (rowcount.count == 0) {
                        // not currently travel checking this flight - no change to travelchecking required
                        // just update traveler record with new content
@@ -99,7 +124,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                             "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
                             "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
                             "ridestatus=($11) WHERE ridenumber=($12)",
-                            [reqBody.travelid,
+                            [travelid,
                             reqBody.pickupday, reqBody.subscriptioncode,
                             reqBody.refclient, reqBody.requestedby,
                             reqBody.g7pickupzone, reqBody.fromplace,
@@ -113,7 +138,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                             "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
                             "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
                             "ridestatus=($11) WHERE ridenumber=($12)",
-                            [reqBody.travelid,
+                            [travelid,
                             reqBody.pickupday, reqBody.subscriptioncode,
                             reqBody.refclient, reqBody.requestedby,
                             reqBody.g7pickupzone, reqBody.fromplace,
@@ -131,14 +156,18 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
 // POST - add a traveler record
 apirouter.post('/v1/travelers/add', function(req, res, err1) {
     var reqBody = req.body;
-
+    logger.info('/v1/travelers/add request ' + reqBody.ridenumber);
     // validate the travel ID parameter
     var travelid = reqBody.travelid;
+
     debugger;
     // No need to store short travelid's
     if (travelid.length < 3)
         return res.json();
+
     var strLen = travelid.length;
+    travelid = travelid.replace(/\s/g, "");
+
     // No need to store travelid's with non-ASCII chars?
     for (var i = 0, strLen = travelid.length; i < strLen; ++i) {
         if (travelid.charCodeAt(i) > 127)
@@ -149,7 +178,7 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
            console.log(err);
        }
        client.query("INSERT INTO travelers VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",
-        [reqBody.ridenumber, reqBody.travelid,
+        [reqBody.ridenumber, travelid,
          reqBody.pickupday, reqBody.subscriptioncode,
          reqBody.refclient, reqBody.requestedby,
          reqBody.g7pickupzone, reqBody.fromplace,
@@ -167,8 +196,10 @@ apirouter.post('/v1/travelers/add', function(req, res, err1) {
 // DELETE traveler reference - triggered by cancellation of the
 // order in the TaxiPak dispatching system
 apirouter.post('/v1/travelers/delete', function(req, res, err1) {
-    var reqBody = req.body;
 
+    var reqBody = req.body;
+    var timeNow = Math.floor(Date.now()/1000);
+    logger.info('/v1/travelers/delete request ' + reqBody.ridenumber);
     pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
             done();
@@ -180,19 +211,20 @@ apirouter.post('/v1/travelers/delete', function(req, res, err1) {
            //Found the order - see if we are currently checking the flight
            // and determine whether we need to continue
            pg.connect(config.connectionString, function(err, clientdelete, done) {
-                var delquery = clientdelete.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
+                var delquery = clientdelete.query("SELECT COUNT(*) FROM travelers WHERE travelid='"+row.travelid+
+                              "' AND initialdueridetimestamp >" + timeNow);
                 delquery.on('row', function(rowcount) {
-                    if (rowcount.count == 0) {
-                        console.log("Not found in travelchecking");
+                    debugger;
+                    if (parseInt(rowcount.count) == 1) {
+                        logger.info("Only one record for this travelID - delete from travelers and travelchecking");
                             // remove record from travelers table
+                            debugger;
                             clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
-                            console.log("Deleted from travelers -" + reqBody.ridenumber);
-                    } else if (rowcount.count == 1) {
-                            // if only 1 result, no need to continue monitoring
-                            clientdelete.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
-                            console.log("Deleted from travelchecking -" + row.travelid);
+                            logger.info("Deleted from travelers -" + reqBody.ridenumber);
+                            clientdelete.query("DELETE FROM travelchecking WHERE travelid='" + row.travelid+"' AND extract(epoch from currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "') > extract(epoch from now())");
+                    } else {
                             clientdelete.query("DELETE FROM travelers WHERE ridenumber="+reqBody.ridenumber);
-                            console.log("Deleted from travelers -" + reqBody.ridenumber);
+                            logger.info("Deleted from travelers -" + reqBody.ridenumber);
                     }
                 });
                 done();
@@ -209,6 +241,7 @@ apirouter.post('/v1/travelers/delete', function(req, res, err1) {
 
 
 apirouter.get('/v1/travelers', function(req, res) {
+  logger.info('/v1/travelers request');
   var results = [];
   pg.connect(config.connectionString, function(err, client, done) {
     if (err) {
@@ -232,9 +265,11 @@ apirouter.get('/v1/travelers', function(req, res) {
 
 
 apirouter.get('/v1/travelboard', function(req, res) {
+  logger.info('/v1/travelboard request');
   var results = [];
   pg.connect(config.connectionString, function(err, client, done) {
     if (err) {
+      logger.info('Error performing travelboard query - ' + err);
       done();
       console.log(err);
       return res.status(500).json({ success: false, data: err});
@@ -250,15 +285,28 @@ apirouter.get('/v1/travelboard', function(req, res) {
             "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid) " +
             "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
      else
-        var query = client.query("SELECT extract(epoch FROM tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') AS checktime," +
-            "tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
-            "tc.currentestimatetravelarrival,tc.initialtravelarrival," +
-            "extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS arrtime," +
-            "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
-            "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
-            "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone FROM travelchecking tc INNER JOIN travelers USING (travelid)  WHERE travelers.initialdueridetimestamp < extract(epoch FROM tc.currentestimatetravelarrival AT TIME ZONE 'CET')" +
-            "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
+     var query = client.query("SELECT extract(epoch FROM tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') AS checktime," +
+         "tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+         "tc.currentestimatetravelarrival,tc.initialtravelarrival," +
+         "extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS arrtime," +
+         "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
+         "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
+         "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone " +
+         "FROM travelchecking tc INNER JOIN travelers USING (travelid)  WHERE status != 'TRAVELID_ERROR' and status !='TERMINATED' and " +
+         "(extract(epoch from tc.currentestimatetravelarrival at time zone '" + config.tzDesc + "') - extract(epoch FROM now() AT TIME ZONE '" + config.tzDesc + "')) > -30000 AND tc.pickupday='" + moment().format('DD-MM-YY') +"' " +
+         "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
 
+      logger.info("SELECT extract(epoch FROM tc.nexttravelcheckdate AT TIME ZONE '" + config.tzDesc + "') AS checktime," +
+         "tc.checkiteration,tc.status,tc.travelid,tc.pickupday,tc.internationalname," +
+         "tc.currentestimatetravelarrival,tc.initialtravelarrival," +
+         "extract(epoch from tc.currentestimatetravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS arrtime," +
+         "extract(epoch from tc.initialtravelarrival AT TIME ZONE '" + config.tzDesc + "' ) AS origarrtime," +
+         "age(tc.currentestimatetravelarrival,tc.initialtravelarrival) AS delay," +
+         "json_agg(travelers.*) AS travelers, travelers.g7pickupzone AS zone " +
+         "FROM travelchecking tc INNER JOIN travelers USING (travelid)  WHERE status != 'TRAVELID_ERROR' and status !='TERMINATED' and " +
+         "(extract(epoch from tc.currentestimatetravelarrival at time zone '" + config.tzDesc + "') - extract(epoch FROM now() AT TIME ZONE '" + config.tzDesc + "')) > -30000 AND tc.pickupday='" + moment().format('DD-MM-YY') +"' " +
+         "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
+      
      query.on('row', function(row) {
 
         if (row.delay.hours)
@@ -292,6 +340,8 @@ apirouter.get('/v1/travelboard', function(req, res) {
         }
     });
     query.on('end', function() {
+      logger.info('Done performing travelboard query');
+	logger.info(results);
       done();
       return res.json(results);
     });

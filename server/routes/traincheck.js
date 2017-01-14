@@ -9,6 +9,7 @@ var https = require('https');
 var jsonQuery = require('json-query');
 var airports = require('../../server/classes/airport');
 var moment = require('moment');
+var logger = require(path.join(__dirname, '../', 'classes','logging')).logger;
 
 var options = {
   host: 'api.sncf.com',
@@ -31,7 +32,7 @@ var traincheck = {
         done();
         console.log(err);
         }
-        client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+        client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1) and pickupday=($2)", [travelid, moment().format('DD-MM-YY')]);
         done();
     });
   },
@@ -40,7 +41,7 @@ var traincheck = {
         pg.connect(config.connectionString, function(err, client, done) {
             if (err) {
                 done();
-                console.log(err);
+                logger.info(err);
             }
             client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"') RETURNING id",
                 function(err, result) {
@@ -55,7 +56,7 @@ var traincheck = {
   },
 
   trainDoCheck: function(f, status) {
-    console.log(Date.now().toLocaleString() + " API check");
+    logger.info(Date.now().toLocaleString() + " API check");
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
     if (travid.length == 1) {
         travid.push(travid[0]);
@@ -83,8 +84,7 @@ var traincheck = {
            try {
             fd = JSON.parse(body);
            } catch (err) {
-	       console.log(err);
-	       logger.info(err);
+	             logger.info(err);
                traincheck.trainError(travelid);
            }
            if (fd.error == null) {
@@ -97,7 +97,7 @@ var traincheck = {
            pg.connect(config.connectionString, function(err, client, done) {
               if (err) {
                   done();
-                  console.log(err);
+                  logger.info(err);
               }
               var query = client.query("SELECT * FROM travelplaces WHERE g7pickupzone=($1)", [station]);
               query.on('row', function(row) {
@@ -146,8 +146,8 @@ var traincheck = {
                                 var query2 = client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " +
                                     " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," +
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=1 " +
-                                    " WHERE travelid=($4)",
-                                    [sArrive, sUpdateArrive, sArrive, travelid]);
+                                    " WHERE travelid=($4) and pickupday=($5)",
+                                    [sArrive, sUpdateArrive, sArrive, travelid, moment().format('DD-MM-YY')]);
 
                                 var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) -
                                                     parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
@@ -162,7 +162,7 @@ var traincheck = {
                                         var period1 = parseInt(moment(disrupts[j].application_periods[0].end,'YYYYMMDD\THHmmss').format('X'));
                                         var period2 = parseInt(moment().format('X'));
                                         if (period1-period2 > 0 && (period1-period2 <86400)) {
-                                            console.log('Found disruption...' + disrupts[j].application_periods[0]);
+                                            logger.info('Found disruption...' + disrupts[j].application_periods[0]);
                                             // check if our stop is affected
                                             if (disrupts[j].impacted_objects.length) {
                                                 var disruptStops = disrupts[j].impacted_objects[0].impacted_stops;
@@ -183,8 +183,8 @@ var traincheck = {
                                 var query2 = client.query("UPDATE travelchecking SET initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " +
                                     " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," +
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=99 " +
-                                    " WHERE travelid=($4)",
-                                    [sArrive, sUpdateArrive, sArrive, travelid]);
+                                    " WHERE travelid=($4) AND pickupday=($5)",
+                                    [sArrive, sUpdateArrive, sArrive, travelid, moment().format('DD-MM-YY')]);
 
                                 var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) -
                                                 parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
@@ -203,11 +203,11 @@ var traincheck = {
               });
               done();
            });
-           console.log(travelid + ' ' + station + ' ' + checkstatus);
+           logger.info(travelid + ' ' + station + ' ' + checkstatus);
         });
 
         res.on('error', function(e){
-            console.log(e.message);
+            logger.info(e.message);
         });
 
     }.bind({travelid:travelid,checkstatus:checkstatus,station:station}));
@@ -219,7 +219,7 @@ var traincheck = {
                 done();
                 console.log(err);
             }
-            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1) AND pickupday=($2)", [travelid, moment().format('DD-MM-YY')]);
             done();
         });
     });
@@ -228,12 +228,12 @@ var traincheck = {
   },
 
   expirator: function() {
-    console.log('Checking trains...');
+    logger.info('Checking trains...');
     var results = [];
     pg.connect(config.connectionString, function(err, client, done) {
       if (err) {
         done();
-        console.log(err);
+        logger.info(err);
       }
       var nowTime = Math.floor(Date.now()/1000);
       var query = client.query("SELECT *, to_char(currentestimatetravelarrival,'YYYY-MM-DD HH24:MM:ss') as current FROM travelchecking WHERE (checkiteration < 99 OR checkiteration = NULL) AND typeofplace ='G' AND status != 'TRAVELID_ERROR' AND status != 'ARRIVED' AND status != 'TERMINATED';");
@@ -288,8 +288,8 @@ var traincheck = {
                 }
           } else if (check2arrival <= -(5*60)) {
               //already arrived...terminate
-              client.query("UPDATE travelchecking SET status='TERMINATED' WHERE travelid=($1)",
-                [travelid]);
+              client.query("UPDATE travelchecking SET status='TERMINATED' WHERE travelid=($1) AND pickupday=($2)",
+                [travelid, moment().format('DD-MM-YY')]);
           }
         });
      }

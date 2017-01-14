@@ -17,10 +17,12 @@ var options = {
 }
 
 var apiRowID = 0;
+var counter = 0;
 
 var flightcheck = {
   init: function() {
     console.log('Started flight check...');
+    logger.info('Started flight check...');
     config.init();
     setInterval(this.expirator.bind(this), 15000); //check for flights to check every 15 seconds - NOT checking the API every 15 seconds
   },
@@ -40,7 +42,7 @@ var flightcheck = {
         pg.connect(config.connectionString, function(err, client, done) {
             if (err) {
                 done();
-		logger.info(err);
+		            logger.info(err);
                 console.log(err);
             }
             client.query("INSERT INTO travelapi VALUES (now(),'" + f.travelid + "','"+call+"') RETURNING id",
@@ -61,13 +63,13 @@ var flightcheck = {
   flightStatsDoCheck: function(f, status) {
     //debugger;
     console.log(Date.now().toLocaleString() + " API check");
-      logger.info("API check");
+    logger.info("API check");
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
     if (travid.length == 1) {
         travid.push(travid[0]);
     }
-    travid[0] = travid[0].replace(/([^a-z0-9]+)/gi, 'x');
-    travid[1] = travid[1].replace(/([^a-z0-9]+)/gi, 'x');
+    travid[0] = travid[0].trim().replace(/([^a-z0-9]+)/gi, 'x');
+    travid[1] = travid[1].trim().replace(/([^a-z0-9]+)/gi, 'x');
     var travelid = f.travelid.substring(0,2) + f.travelid.substring(2,f.travelid.length);
     var checkstatus = f.status;
     var currentestimate = f.currentestimatetravelarrival;
@@ -89,6 +91,7 @@ var flightcheck = {
             return;
         }
         console.log(travelid + ' ' + checkstatus);
+        logger.info(travelid + ' ' + checkstatus);
         if (fd.error == null) {
         if (fd.flightStatuses.length == 0) {
             flightcheck.flightStatsError(travelid);
@@ -246,7 +249,10 @@ var flightcheck = {
   },
 
   expirator: function() {
-    console.log('Checking flights...');
+    logger.info('Checking flights...' + ++counter);
+    //if (counter == 75)
+    //  process.exit();
+
     var results = [];
     pg.connect(config.connectionString, function(err, client, done) {
       if (err) {
@@ -281,8 +287,9 @@ var flightcheck = {
             {
                 switch (checkstatus) {
                     case 'UNCHECKED':
-                        if (time2arrival < config.firstCheck * 60) {
+                        if ((time2arrival < config.firstCheck * 60) && (time2arrival > -7200)) {
                             console.log(new Date().toLocaleString() + " Initial API check - " + travelid);
+                            logger.info(new Date().toLocaleString() + " Initial API check - " + travelid);
                             flightcheck.flightStatsDoCheck(f, checkstatus);
                         }
                         break;
@@ -291,6 +298,7 @@ var flightcheck = {
                         time2check = Math.floor(f.nexttravelcheckdate/1000) - Math.floor(Date.now()/1000);
                         if (time2check < 5 * 60) {
                             console.log(new Date().toLocaleString() + " Second API check - " + travelid);
+                            logger.info(new Date().toLocaleString() + " Second API check - " + travelid);
                             flightcheck.flightStatsDoCheck(f, checkstatus);
                         }
                         break;

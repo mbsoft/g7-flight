@@ -109,7 +109,7 @@ function addSolariBoard(divSelector) {
     }
 
     if (arguments.length === 0) {
-        $("body").append("<div id=\"solariBoardDiv\" style=\"width:1300px;margin:0 auto;overflow:hidden\"></div>");
+        $("body").append("<div id=\"solariBoardDiv\" style=\"width:1400px;margin:0 auto;overflow:hidden\"></div>");
         divSelector = "#solariBoardDiv";
     }
 
@@ -131,6 +131,7 @@ function addSolariBoard(divSelector) {
             "<ul class=\"solari-board-columns rounded\">" +
             "<li class=\"expander\"></li>" +
             "<li class=\"status\"></li>" +
+            "<li class=\"trans\"></li>" +
             "<li class=\"stime\">H. initiale</li>" +
             "<li class=\"delay\">Retard</li>" +
             "<li class=\"atime\">H. prevue</li>" +
@@ -223,8 +224,11 @@ function removeRow(selector, row) {
 function appendRow(selector, row) {
     $(selector).append('<li class=board-data id=row' + row +
         '><ul class="master-row"><li class=expander><a href="#" id=expander' + row +
-        '><i class=\"fa fa-angle-right fa-2x\"></i></a></li><li class=status><span class="circle">' +
-        '</span></li><li class=stime></li><li class=delay></li><li class=atime></li>' +
+        '><i class=\"fa fa-angle-right fa-2x\"></i></a></li>' +
+                '<li class=trans><span class="transtype"></span></li>' +
+        '<li class=status><span class="circle"></span></li>' +
+
+        '<li class=stime></li><li class=delay></li><li class=atime></li>' +
         '<li class=departure></li><li class="rides"></li></ul>' +
         '<div class="traveler-expander"><ul class=\"solari-board-sub-columns rounded sub-header\">' +
         '<li class="index">Idx</li><li class="order">N<C2><B0> course</li><li class="subscription">ABONNE</li>' +
@@ -389,7 +393,12 @@ function UpdateSolariRow(row, current_row, new_row) {
     else if (new_row.color == 'red')
         circle = 'circle-red';
 
-
+  var transtype = 'transtype-flight';
+  if (new_row.travelers) {
+    if (new_row.travelers[0].typeofplace == 'G')
+      transtype = 'transtype-train';
+  }
+  $("#row" + row + " ul li.trans span").addClass(transtype);
   $("#row" + row + " ul li.status span").attr('class', 'circle');
   $("#row" + row + " ul li.status span").addClass(circle);
 }
@@ -409,7 +418,7 @@ function InsertChars(selector_prefix, max_boxes, current_text, new_text, new_row
                 $(selector).html('<span class="board-arrived-text">'+character+'</span>');
             else if (new_row.status == Status.error)
                 $(selector).html('<span class="board-error-text">'+character+'</span>');
-            else 
+            else
                 $(selector).html('<span class="board-green-text">'+character+'</span>');
             //else if (new_row.delay > 0 && new_row.delay <= DELAY_RED)
             //    $(selector).html('<span class="board-yellow-text">'+character+'</span>');
@@ -630,15 +639,17 @@ function populateSubRow(rowIndex, mainRow){
             // Fill out the letter boxes for RIDER
             InsertSubChars('#row'+rowIndex+'sub-row'+index+' #rider-row'+rowIndex, RIDER_BOXES, '', value.refclient, false);
 
-            if (value.lastdueridetimestamp > 0)
-                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.lastdueridetimestamp, 'X').format('HHmm','fr'), false);
-            else
-                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);     
-            if (mainRow.delay >= 15)
-                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(mainRow.arrtime, 'X').format('HHmm','fr'), false);
+            //if (value.lastdueridetimestamp > 0)
+            //    InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.lastdueridetimestamp, 'X').format('HHmm','fr'), false);
+            //else
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #inittime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);
+
+            if (value.lastdueridetimestamp > 0) //if (mainRow.delay >= 15)
+                InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.lastdueridetimestamp, 'X').format('HHmm','fr'), false);
+                //InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(mainRow.arrtime, 'X').format('HHmm','fr'), false);
             else
                 InsertSubChars('#row'+rowIndex+'sub-row'+index+' #nexttime-row'+rowIndex, TIME_BOXES, '', moment(value.initialdueridetimestamp, 'X').format('HHmm','fr'), false);
- 
+
             // Fill out the letter boxes for REQUESTOR
             //InsertChars('#row'+rowIndex+'sub-row'+index+' #requestor-row'+rowIndex, REQUESTOR_BOXES, '', value.requestedby, false);
         });

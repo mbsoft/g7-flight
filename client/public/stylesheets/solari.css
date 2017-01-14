@@ -169,7 +169,7 @@ li.expander a{
   color: #ffffff;
 }
 
-li.alert, li.departure, li.product, li.status, li.stime, li.atime, li.delay, li.from, li.track, li.place, li.expander {
+li.alert, li.departure, li.product, li.status, li.trans, li.stime, li.atime, li.delay, li.from, li.track, li.place, li.expander {
   float: left;
   margin: 2px 14px 2px 0;
 }
@@ -190,6 +190,9 @@ li.departure {
   width: 750px;
 }
 li.status {
+  width: 30px;
+}
+li.trans {
   width: 30px;
 }
 li.alert {
@@ -214,7 +217,7 @@ li.alert {
   background: url(../images/letters-red-final.png) #000000 -3px 0;
   overflow: hidden;
   border-left: 1px solid #404040;
-  border-bottom: 1px solid #404040;  
+  border-bottom: 1px solid #404040;
 }
 
 .subletterbox {
@@ -225,7 +228,7 @@ li.alert {
   background: url(../images/letters-final.png) #000000 -3px 0;
   overflow: hidden;
   border-left: 1px solid #404040;
-  border-bottom: 1px solid #404040;   
+  border-bottom: 1px solid #404040;
 }
 
 .iconbox {
@@ -326,6 +329,22 @@ li.board-data {
   font-weight: bold;
   top: 5px;
 }
+.transtype {
+  margin-top: 4px;
+  width: 25px;
+  height: 25px;
+  background: #000000;
+  display:inline-block;
+}
+
+.transtype-flight {
+  background: url(../images/AvionG7Gris.png) no-repeat;
+}
+
+.transtype-train {
+  background: url(../images/trainG7Gris.png) no-repeat;
+}
+
 .circle, .circle-on {
   display: inline-block;
   width: 10px;
@@ -508,4 +527,3 @@ li.inittime {
 li.nexttime {
   width: 125px;
 }
-
