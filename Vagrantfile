@@ -13,7 +13,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # config.ssh.private_key_path = "~/.ssh/id_rsa"
     # config.ssh.forward_agent = true
     # Every Vagrant virtual environment requires a box to build off of.
-    machine.vm.box = "centos/7"
+    # machine.vm.box = "centos/7"
+    machine.vm.box = "ubuntu/trusty64"
     machine.vm.hostname = "local-platform"
 
     # Create a forwarded port mapping which allows access to a specific port

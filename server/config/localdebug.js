@@ -1,7 +1,8 @@
 var pg = require('pg');
 
 var Config = {
-  connectionString : 'postgres://localhost/nouvel_ui',
+  //connectionString : 'postgres://localhost/nouvel_ui',
+  connectionString : 'postgres://checktpp:91mwMc@localhost:1111/checkt',
   //connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
@@ -14,7 +15,7 @@ var Config = {
   // Developer keys
   flightstatsAppID: '9e542dda',
   flightstatsAppKey : '52b0919821212f0df01a112f842e99df',
-  tzDesc: 'CEST',
+  tzDesc: 'CET',
 
   //Logging
   logDirectory: './logs',

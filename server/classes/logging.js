@@ -48,7 +48,7 @@ logger.add(logger.transports.Console, {
 
 logger.add(logger.transports.File, {
     // Friendly to trailing or non trailing slash configs.
-    filename: path.join(logDirectory, "request.log"),
+    filename: path.join(logDirectory, "master-console.log"),
     maxsize: 100000000,
     colorize: false,
     json: false,
