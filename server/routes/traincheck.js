@@ -56,6 +56,7 @@ var traincheck = {
 
   trainDoCheck: function(f, status) {
     console.log(Date.now().toLocaleString() + " API check");
+    var uniqueID = f.id;
     var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
     if (travid.length == 1) {
         travid.push(travid[0]);
@@ -146,8 +147,8 @@ var traincheck = {
                                 var query2 = client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " +
                                     " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," +
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=1 " +
-                                    " WHERE travelid=($4)",
-                                    [sArrive, sUpdateArrive, sArrive, travelid]);
+                                    " WHERE id=($4)",
+                                    [sArrive, sUpdateArrive, sArrive, uniqueID]);
 
                                 var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) -
                                                     parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
@@ -183,8 +184,8 @@ var traincheck = {
                                 var query2 = client.query("UPDATE travelchecking SET initialtravelarrival=to_timestamp($1,'YYYY-MM-DDHH24MISS'), " +
                                     " currentestimatetravelarrival=to_timestamp($2,'YYYY-MM-DDHH24MISS')," +
                                     " nexttravelcheckdate=to_timestamp($3,'YYYY-MM-DDHH24MISS') - interval  '" + config.secondCheckTrain + " minutes', checkiteration=99 " +
-                                    " WHERE travelid=($4)",
-                                    [sArrive, sUpdateArrive, sArrive, travelid]);
+                                    " WHERE id=($4)",
+                                    [sArrive, sUpdateArrive, sArrive, uniqueID]);
 
                                 var calcDelay = parseInt(moment(sUpdateArrive, 'YYYY-MM-DDHHmmSS').format('X')) -
                                                 parseInt(moment(sArrive, 'YYYY-MM-DDHHmmSS').format('X'));
@@ -219,7 +220,7 @@ var traincheck = {
                 done();
                 console.log(err);
             }
-            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where id=($1)", [uniqueID]);
             done();
         });
     });
@@ -244,6 +245,7 @@ var traincheck = {
         done();
         if (results) {
           results.forEach(function(f){
+            var uniqueID = f.id;
             var travelid = f.travelid.substring(0,2) + f.travelid.substring(2,f.travelid.length);
             var checkstatus = f.status;
             // check criteria for making Flight Stats API call - always make when INITIAL
@@ -288,8 +290,8 @@ var traincheck = {
                 }
           } else if (check2arrival <= -(5*60)) {
               //already arrived...terminate
-              client.query("UPDATE travelchecking SET status='TERMINATED' WHERE travelid=($1)",
-                [travelid]);
+              client.query("UPDATE travelchecking SET status='TERMINATED' WHERE id=($1)",
+                [uniqueID]);
           }
         });
      }
