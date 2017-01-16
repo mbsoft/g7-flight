@@ -96,6 +96,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
             console.log(err);
         }
         var query = client.query("SELECT * FROM travelers WHERE ridenumber=" + reqBody.ridenumber);
+        debugger;
         query.on('row', function(row) {
            // record exists...update it
            if (row.travelid == travelid) {
@@ -114,7 +115,8 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
            } else {
                // changed flights so need to see if there's any need to
                // continue doing travel checking on the saved flight
-               var rowquery = client.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+row.travelid+"'");
+               var rowquery = client.query("SELECT COUNT(*) FROM travelchecking WHERE travelid='"+
+                                            row.travelid+"' and pickupday='" + reqBody.pickupday + "'");
                rowquery.on('row', function(rowcount) {
                    debugger;
                    if (rowcount.count == 0) {
@@ -133,7 +135,7 @@ apirouter.post('/v1/travelers/update', function(req, res, err1) {
                     } else if (rowcount.count == 1) {
                         // this was the only traveler for an entry in travelchecking...delete
                         // ...and then update traveler record
-                        client.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"'");
+                        client.query("DELETE FROM travelchecking WHERE travelid='"+row.travelid+"' and pickupday='" + reqBody.pickupday + "'");
                         var updateQuery = client.query("UPDATE travelers SET travelid=($1)," +
                             "pickupday=($2),subscriptioncode=($3),requestedby=($4),refclient=($5),g7pickupzone=($6)," +
                             "fromplace=($7),typeofplace=($8),initialdueridetimestamp=($9),lastdueridetimestamp=($10)," +
@@ -306,7 +308,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
          "FROM travelchecking tc INNER JOIN travelers USING (travelid)  WHERE status != 'TRAVELID_ERROR' and status !='TERMINATED' and " +
          "(extract(epoch from tc.currentestimatetravelarrival at time zone '" + config.tzDesc + "') - extract(epoch FROM now() AT TIME ZONE '" + config.tzDesc + "')) > -30000 AND tc.pickupday='" + moment().format('DD-MM-YY') +"' " +
          "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
-      
+
      query.on('row', function(row) {
 
         if (row.delay.hours)
