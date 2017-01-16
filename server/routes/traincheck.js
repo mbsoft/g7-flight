@@ -163,7 +163,7 @@ var traincheck = {
                                         var period1 = parseInt(moment(disrupts[j].application_periods[0].end,'YYYYMMDD\THHmmss').format('X'));
                                         var period2 = parseInt(moment().format('X'));
                                         if (period1-period2 > 0 && (period1-period2 <86400)) {
-                                            logger.info('Found disruption...' + disrupts[j].application_periods[0]);
+                                            logger.info('Found disruption...' + JSON.stringify(disrupts[j].application_periods[0]));
                                             // check if our stop is affected
                                             if (disrupts[j].impacted_objects.length) {
                                                 var disruptStops = disrupts[j].impacted_objects[0].impacted_stops;

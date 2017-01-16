@@ -74,7 +74,7 @@ apirouter.get('/v1/heartbeat', function(req, res) {
 // POST - update a traveler record
 apirouter.post('/v1/travelers/update', function(req, res, err1) {
 
-    logger.info('/v1/travelers/update request ' + req.body);
+    logger.info('/v1/travelers/update request ' + JSON.stringify(req.body));
     var reqBody = req.body;
 
     // validate the travel ID parameter
@@ -306,7 +306,7 @@ apirouter.get('/v1/travelboard', function(req, res) {
          "FROM travelchecking tc INNER JOIN travelers USING (travelid)  WHERE status != 'TRAVELID_ERROR' and status !='TERMINATED' and " +
          "(extract(epoch from tc.currentestimatetravelarrival at time zone '" + config.tzDesc + "') - extract(epoch FROM now() AT TIME ZONE '" + config.tzDesc + "')) > -30000 AND tc.pickupday='" + moment().format('DD-MM-YY') +"' " +
          "GROUP BY travelers.g7pickupzone,checktime,tc.checkiteration,tc.pickupday,tc.travelid,tc.status,tc.internationalname,tc.initialtravelarrival,tc.currentestimatetravelarrival,arrtime,delay order by origarrtime");
-      
+
      query.on('row', function(row) {
 
         if (row.delay.hours)
@@ -340,9 +340,8 @@ apirouter.get('/v1/travelboard', function(req, res) {
         }
     });
     query.on('end', function() {
-      logger.info('Done performing travelboard query');
-	logger.info(results);
-      done();
+	     logger.info(results);
+       done();
       return res.json(results);
     });
   });
