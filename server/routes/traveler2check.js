@@ -23,11 +23,11 @@ var travel2check = {
         logger.info(err);
       }
       // Get rows in the travelers table that aren't represented in the travelchecking table
-      var query = client.query("SELECT DISTINCT ON(travelid) t.processed, travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
+
+      var query = client.query("SELECT DISTINCT ON(travelid) t.processed, travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, CASE WHEN lastdueridetimestamp=0 THEN initialdueridetimestamp ELSE lastdueridetimestamp END as initialdueridetimestamp " +
           "FROM travelers t, travelplaces tp WHERE NOT EXISTS(" +
           "SELECT 1 FROM travelchecking tc " +
-          "WHERE t.travelid=tc.travelid and pickupday='" + moment().format('DD-MM-YY') + "') and t.g7pickupzone=tp.g7pickupzone and t.processed != true and t.pickupday='" +
-          moment().format('DD-MM-YY') + "'");
+          "WHERE t.travelid=tc.travelid and tc.pickupday=t.pickupday) and t.g7pickupzone=tp.g7pickupzone and t.processed != true");
 
       query.on('row', function(row) {
         results.push(row);
@@ -53,7 +53,7 @@ var travel2check = {
                       done();
   		                logger.info(err);
                   }
-
+                  f.fromplace = f.fromplace.replace(/\'/g, '-');
                   client.query("INSERT INTO travelchecking VALUES (" +
                       "DEFAULT,'UNCHECKED','" + f.travelid + "','" + f.pickupday + "','" +
                       f.fromplace.toUpperCase() + "','" + f.internationalcode + "','" + f.typeofplace + "',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "'," +
