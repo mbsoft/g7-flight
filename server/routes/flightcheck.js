@@ -27,13 +27,13 @@ var flightcheck = {
     setInterval(this.expirator.bind(this), 15000); //check for flights to check every 15 seconds - NOT checking the API every 15 seconds
   },
 
-  flightStatsError: function(travelid) {
+  flightStatsError: function(id) {
     pg.connect(config.connectionString, function(err, client, done) {
         if (err) {
         done();
         console.log(err);
         }
-        client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+        client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where id=($1)", [id]);
         done();
     });
   },
@@ -64,17 +64,30 @@ var flightcheck = {
     //debugger;
     console.log(Date.now().toLocaleString() + " API check");
     logger.info("API check");
-    var travid = f.travelid.match(/(\d+|[^\d]+)/g).join(',').split(',');
-    if (travid.length == 1) {
-        travid.push(travid[0]);
+    var re = /([A-Za-z]{3}|[A-Za-z0-9]{2})([0-9]*)/g;
+    var travid = re.exec(f.travelid);
+
+
+    if (travid == null) {
+      // null value in travelid somehow - just make a dummy flight ID
+      flightcheck.flightStatsError(f.id);
+      return;
     }
-    travid[0] = travid[0].trim().replace(/([^a-z0-9]+)/gi, 'x');
+
+    if (travid[1].length == 0 || travid[2].length == 0) {
+      flightcheck.flightStatsError(f.id);
+      return;
+    }
+
     travid[1] = travid[1].trim().replace(/([^a-z0-9]+)/gi, 'x');
-    var travelid = f.travelid.substring(0,2) + f.travelid.substring(2,f.travelid.length);
+    travid[2] = travid[2].trim().replace(/([^a-z0-9]+)/gi, 'x');
+    var travelid = f.travelid;
+    var id = f.id;
     var checkstatus = f.status;
     var currentestimate = f.currentestimatetravelarrival;
-    options.path = config.flightstatsPath + travid[0].trim().toUpperCase() +'/'
-        + travid[1].trim().toUpperCase()
+
+    options.path = config.flightstatsPath + travid[1].trim().toUpperCase() +'/'
+        + travid[2].trim().toUpperCase()
         + '/arr/20' + f.pickupday.substring(6,8) + '/' + f.pickupday.substring(3,5) + '/' + f.pickupday.substring(0,2)
         +'?appId=' + config.flightstatsAppID + '&appKey=' + config.flightstatsAppKey + '&utc=false' + '&airport=' + f.internationalcode;
 
@@ -87,14 +100,14 @@ var flightcheck = {
         try {
             fd = JSON.parse(data);
         } catch (err)  {
-            flightcheck.flightStatsError(travelid);
+            flightcheck.flightStatsError(id);
             return;
         }
         console.log(travelid + ' ' + checkstatus);
         logger.info(travelid + ' ' + checkstatus);
         if (fd.error == null) {
         if (fd.flightStatuses.length == 0) {
-            flightcheck.flightStatsError(travelid);
+            flightcheck.flightStatsError(id);
         }
 
         var fs;
@@ -110,7 +123,7 @@ var flightcheck = {
         }
 
         if (fs == null || (fs.arrivalAirportFsCode != 'LAX' && fs.arrivalAirportFsCode != 'ORY' && fs.arrivalAirportFsCode != 'CDG')) {
-            flightcheck.flightStatsError(travelid);
+            flightcheck.flightStatsError(id);
         } else if (fs != null) {
 
         // query PG and update
@@ -229,7 +242,7 @@ var flightcheck = {
         pg.connect(config.connectionString, function(err, client, done) {
             if (err) {
                 done();
-                console.log(err);
+                logger.info(err);
             }
             client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
         });
@@ -237,13 +250,13 @@ var flightcheck = {
     });
 
     res.on('error', function(e){
-        //console.log(e.message);
+        logger.info(e.message);
     });
     }.bind({travelid:travelid,checkstatus:checkstatus}));
 
     req.end();
     req.on('error', function(err){
-    //console.log("Error: ", err);
+      logger.info("Error: ", err);
     });
 
   },

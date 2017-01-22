@@ -26,7 +26,7 @@ var travel2check = {
       var query = client.query("SELECT DISTINCT ON(travelid) t.processed, travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
           "FROM travelers t, travelplaces tp WHERE NOT EXISTS(" +
           "SELECT 1 FROM travelchecking tc " +
-          "WHERE t.travelid=tc.travelid and pickupday='" + moment().format('DD-MM-YY') + "') and t.g7pickupzone=tp.g7pickupzone and t.processed != true");
+          "WHERE t.travelid=tc.travelid and tc.pickupday='" + moment().format('DD-MM-YY') + "') and t.g7pickupzone=tp.g7pickupzone and t.processed != true");
 
       query.on('row', function(row) {
         results.push(row);
@@ -41,7 +41,7 @@ var travel2check = {
           var timeNow = Math.floor(Date.now()/1000);
 
           results.forEach(function(f){
-            
+
             // transfer orders that are coming due in the next hour
             if ((f.initialdueridetimestamp - (60+5)*60 <= timeNow) &&
                 (f.initialdueridetimestamp - timeNow > 0)) {
@@ -52,7 +52,7 @@ var travel2check = {
                       done();
   		                logger.info(err);
                   }
-
+                  f.fromplace = f.fromplace.replace(/\'/g, '-');
                   client.query("INSERT INTO travelchecking VALUES (" +
                       "DEFAULT,'UNCHECKED','" + f.travelid + "','" + f.pickupday + "','" +
                       f.fromplace.toUpperCase() + "','" + f.internationalcode + "','" + f.typeofplace + "',to_timestamp(" + f.initialdueridetimestamp + ")::timestamp WITH TIME ZONE AT TIME ZONE '" + config.tzDesc + "'," +
