@@ -74,7 +74,7 @@ apirouter.get('/v1/heartbeat', function(req, res) {
 // POST - update a traveler record
 apirouter.post('/v1/travelers/update', function(req, res, err1) {
 
-    logger.info('/v1/travelers/update request ' + req.body);
+    logger.info('/v1/travelers/update request ' + JSON.stringify(req.body));
     var reqBody = req.body;
 
     // validate the travel ID parameter
@@ -342,9 +342,8 @@ apirouter.get('/v1/travelboard', function(req, res) {
         }
     });
     query.on('end', function() {
-      logger.info('Done performing travelboard query');
-	logger.info(results);
-      done();
+	     logger.info(results);
+       done();
       return res.json(results);
     });
   });
