@@ -23,10 +23,11 @@ var travel2check = {
         logger.info(err);
       }
       // Get rows in the travelers table that aren't represented in the travelchecking table
-      var query = client.query("SELECT DISTINCT ON(travelid) t.processed, travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, initialdueridetimestamp " +
+
+      var query = client.query("SELECT DISTINCT ON(travelid) t.processed, travelid,t.fromplace,t.typeofplace,tp.internationalcode, pickupday, CASE WHEN lastdueridetimestamp=0 THEN initialdueridetimestamp ELSE lastdueridetimestamp END as initialdueridetimestamp " +
           "FROM travelers t, travelplaces tp WHERE NOT EXISTS(" +
           "SELECT 1 FROM travelchecking tc " +
-          "WHERE t.travelid=tc.travelid and tc.pickupday='" + moment().format('DD-MM-YY') + "') and t.g7pickupzone=tp.g7pickupzone and t.processed != true");
+          "WHERE t.travelid=tc.travelid and tc.pickupday=t.pickupday) and t.g7pickupzone=tp.g7pickupzone and t.processed != true");
 
       query.on('row', function(row) {
         results.push(row);
