@@ -1,8 +1,8 @@
 var pg = require('pg');
 
 var Config = {
-  //connectionString : 'postgres://localhost/nouvel_ui',
-  connectionString : 'postgres://checktpp:91mwMc@localhost:1111/checkt',
+  connectionString : 'postgres://localhost/nouvel_ui',
+  //connectionString : 'postgres://checktpp:91mwMc@localhost:1111/checkt',
   //connectionString : 'postgres://jwelch:JWELCH@psql-dev1/db_checkt',
   flightstatsPath :'/flex/flightstatus/rest/v2/json/flight/status/',
   airportstatsPath: '/flex/flightstatus/rest/v2/json/airport/status/',
