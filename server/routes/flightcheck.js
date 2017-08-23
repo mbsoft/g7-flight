@@ -64,6 +64,7 @@ var flightcheck = {
     //debugger;
     console.log(Date.now().toLocaleString() + " API check");
     logger.info("API check");
+
     var re = /([A-Za-z]{3}|[A-Za-z0-9]{2})([0-9]*)/g;
     var travid = re.exec(f.travelid);
 
@@ -152,8 +153,8 @@ var flightcheck = {
         if (otimes.estimatedGateArrival||otimes.scheduledGateArrival||otimes.estimatedRunwayArrival) {
             if (checkstatus == 'ACTIVE') {
                 if (otimes.actualGateArrival) { // flight has arrived at gate.
-                    client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
-                        [otimes.actualGateArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                    client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE id=($3)",
+                        [otimes.actualGateArrival.dateLocal,Math.floor(Date.now()/1000),uniqueID ]);
                 } else
                 {
                     // this is our second check. If all is good we end monitoring of this flight.
@@ -171,34 +172,34 @@ var flightcheck = {
                     var nowTime = Math.floor(Date.now()/1000);
 
                     if (nowTime - newEstimate > 5*60) // > 5 minutes since original arrival estimate. Old!
-                        client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1) WHERE travelid=($2)",
+                        client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1) WHERE id=($2)",
                             [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
-                            travelid ]);
+                            uniqueID ]);
                     else if (secondsDiff > 15*60)
                         client.query("UPDATE travelchecking SET status='ACTIVE',checkiteration=2,currentestimatetravelarrival=($1),nexttravelcheckdate=timestamp '" +
-                            (otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal)+"'  - interval '" + config.limitCheck + " minutes' WHERE travelid=($2)",
+                            (otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal)+"'  - interval '" + config.limitCheck + " minutes' WHERE id=($2)",
                             [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
-                            travelid ]);
+                            uniqueID ]);
                     else  //we're good and don't need to check this one again
-                        client.query("UPDATE travelchecking SET currentestimatetravelarrival=($1),checkiteration=99 WHERE travelid=($2)",
+                        client.query("UPDATE travelchecking SET currentestimatetravelarrival=($1),checkiteration=99 WHERE id=($2)",
                             [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
-                            travelid ]);
+                            uniqueID ]);
                 }
             }
             else if (checkstatus == 'UNCHECKED') {  // getting an initial estimate of arrival and setup for another check 30 minutes prior to this estimate
                 if (otimes.estimatedGateArrival||otimes.scheduledGateArrival) {
 
                     client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1), initialtravelarrival=($2),nexttravelcheckdate=timestamp '" +
-                        (otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal)+ "'  - interval '" + config.limitCheck + " minutes', checkiteration=1  WHERE travelid=($3)",
+                        (otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal)+ "'  - interval '" + config.limitCheck + " minutes', checkiteration=1  WHERE id=($3)",
                         [(otimes.estimatedGateArrival?otimes.estimatedGateArrival.dateLocal:otimes.scheduledGateArrival.dateLocal),
                         (otimes.scheduledGateArrival?otimes.scheduledGateArrival.dateLocal:otimes.estimatedGateArrival.dateLocal),
-                        travelid]);
+                        uniqueID]);
                 } else if (otimes.estimatedRunwayArrival) {
                     client.query("UPDATE travelchecking SET status='ACTIVE',currentestimatetravelarrival=($1), initialtravelarrival=($2),nexttravelcheckdate=timestamp '" +
-                        otimes.estimatedRunwayArrival.dateLocal + "' - interval ' " + config.limitCheck + " minutes', checkiteration=1 WHERE travelid=($3)",
+                        otimes.estimatedRunwayArrival.dateLocal + "' - interval ' " + config.limitCheck + " minutes', checkiteration=1 WHERE id=($3)",
                         [otimes.estimatedRunwayArrival.dateLocal,
                         otimes.estimatedRunwayArrival.dateLocal,
-                        travelid]);
+                        uniqueID]);
                 }
 
             }
@@ -208,17 +209,17 @@ var flightcheck = {
 
             if (checkstatus == 'UNCHECKED') {
                 if (otimes.actualRunwayArrival != null)
-                client.query("UPDATE travelchecking SET status='TERMINATED',initialtravelarrival=($1),currentestimatetravelarrival=($2) WHERE travelid=($3)",
-                [otimes.actualRunwayArrival.dateLocal,otimes.actualRunwayArrival.dateLocal,travelid ]);
+                client.query("UPDATE travelchecking SET status='TERMINATED',initialtravelarrival=($1),currentestimatetravelarrival=($2) WHERE id=($3)",
+                [otimes.actualRunwayArrival.dateLocal,otimes.actualRunwayArrival.dateLocal,uniqueID ]);
             }
             else if (checkstatus == 'CHECKED' || checkstatus == 'ACTIVE') {
 
             if (otimes.actualRunwayArrival != null)
-                client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE travelid=($3)",
-                [otimes.actualRunwayArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                client.query("UPDATE travelchecking SET status='TERMINATED',currentestimatetravelarrival=($1),nexttravelcheckdate=to_timestamp(($2)) WHERE id=($3)",
+                [otimes.actualRunwayArrival.dateLocal,Math.floor(Date.now()/1000),uniqueID ]);
             else if (otimes.estimatedRunwayArrival != null)
-                client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=($1),currentestimatetravelarrival=($2),nexttravelcheckdate=to_timestamp(($3)) WHERE travelid=($4)",
-                    [otimes.estimatedRunwayArrival.dateLocal,otimes.estimatedRunwayArrival.dateLocal,Math.floor(Date.now()/1000),travelid ]);
+                client.query("UPDATE travelchecking SET status='ACTIVE',initialtravelarrival=($1),currentestimatetravelarrival=($2),nexttravelcheckdate=to_timestamp(($3)) WHERE id=($4)",
+                    [otimes.estimatedRunwayArrival.dateLocal,otimes.estimatedRunwayArrival.dateLocal,Math.floor(Date.now()/1000),uniqueID ]);
 
             }
         }
@@ -244,7 +245,8 @@ var flightcheck = {
                 done();
                 logger.info(err);
             }
-            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where travelid=($1)", [travelid]);
+            client.query("UPDATE travelchecking SET status='TRAVELID_ERROR' where id=($1)", [uniqueID]);
+            done();
         });
     }
     });
@@ -281,6 +283,7 @@ var flightcheck = {
         done();
         if (results) {
           results.forEach(function(f){
+            var uniqueID = f.id;
             var travelid = f.travelid.substring(0,2) + f.travelid.substring(2,f.travelid.length);
             var checkstatus = f.status;
             // check criteria for making Flight Stats API call - always make when INITIAL
@@ -291,7 +294,7 @@ var flightcheck = {
             else
                 check2arrival = Math.floor(f.initialtravelarrival/1000) - Math.floor(Date.now()/1000);
             var time2check = 0;
-            //debugger;
+
             // UNCHECKED - record just added to the table. No query to the API yet
             // CHECKED - first check of arrival tiem retrieved. Won't be checked again until within configurable time of arrival
             // ACTIVE - flight that is being actively checked for status
@@ -324,8 +327,8 @@ var flightcheck = {
                 }
           } else if (check2arrival <= -(5*60)) {
               //already arrived...terminate
-              client.query("UPDATE travelchecking SET status='TERMINATED' WHERE travelid=($1)",
-                [travelid]);
+              client.query("UPDATE travelchecking SET status='TERMINATED' WHERE id=($1)",
+                [uniqueID]);
           }
         });
      }

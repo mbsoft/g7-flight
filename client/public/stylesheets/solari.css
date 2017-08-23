@@ -330,9 +330,8 @@ li.board-data {
   top: 5px;
 }
 .transtype {
-  margin-top: 4px;
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   background: #000000;
   display:inline-block;
 }
