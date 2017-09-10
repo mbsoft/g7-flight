@@ -1,6 +1,6 @@
 # G7 Flight Stats Integration
 
-[a relative link](./Travelboard_example.png)
+![alt text](Travelboard_example.png, 'Travelboard')
  
 Create PSQL database named 'nouvel_ui (not needed unless testing locally)'
 
