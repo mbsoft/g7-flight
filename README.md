@@ -1,5 +1,7 @@
 # G7 Flight Stats Integration
 
+[a relative link](./Travelboard_example.png)
+
 Create PSQL database named 'nouvel_ui (not needed unless testing locally)'
 
 Create schema and restore some test data
