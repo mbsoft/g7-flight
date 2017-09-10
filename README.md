@@ -1,6 +1,6 @@
 # G7 Flight Stats Integration
 
-<img src="https://user-images.githubusercontent.com/425849/31900345-10677b2a-b7ec-11e7-9e79-b8aad932efa8.png" width="55%"></img> 
+<img src="https://user-images.githubusercontent.com/425849/31902172-eb375ce8-b7f1-11e7-99c7-233edfea3827.png" width="55%"></img> 
  
 Create PSQL database named 'nouvel_ui (not needed unless testing locally)'
 
