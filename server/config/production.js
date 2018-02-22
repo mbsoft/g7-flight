@@ -8,11 +8,9 @@ var Config = {
   trainUserKey: '66ecc2fe-1fe6-43ae-ad6d-f30b3ea4f79a',
   // Flight Stats API production key API values provided by Ludovic
   // from Taxis G7
-  //flightstatsAppID :'9e542dda',
-  //flightstatsAppKey :'d91bc4b068a0ff9fc585b8cefca108a8',
   // Developer keys
-  flightstatsAppID: '9e542dda',
-  flightstatsAppKey : '52b0919821212f0df01a112f842e99df',
+  flightstatsAppID: '',
+  flightstatsAppKey : '',
   tzDesc: 'CET',
 
   //Logging
